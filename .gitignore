@@ -1,0 +1,30 @@
+# 依存パッケージ
+node_modules/
+
+# ビルド出力
+dist/
+build/
+
+# ログファイル
+logs/
+*.log
+
+# OS固有ファイル
+.DS_Store
+Thumbs.db
+
+# エディタ設定
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# 環境設定
+.env
+.env.local
+.env.*.local
+
+# その他
+coverage/
+.npm
+.yarn-integrity
