@@ -9,67 +9,32 @@ Rooがエラーに遭遇した際に自動的にログを記録するための`.
 ```markdown
 ## エラーハンドリング
 
-### エラーログ設定
-- logger: roo-activity-logger
-- log_on_error: true
-- error_log_dir: error-logs
-- include_context: true
-- include_stacktrace: true
+エラーが発生した場合は、以下の方針に従って処理してください。
 
-### エラー発生時のアクション
-- log_before_retry: true
-- notify_on_critical: true
-- max_retries: 3
+### エラー記録
+
+- 全てのエラーはroo-activity-loggerを使用して記録してください
+- エラーログは`error-logs`ディレクトリに保存してください
+- ログにはスタックトレースと実行コンテキストを含めてください
+- エラーの意図と文脈情報を記録してください
+
+### 再試行ポリシー
+
+- 接続エラーやタイムアウトエラーは最大3回まで再試行してください
+- 再試行する前に「再試行を行う理由」を記録してください
+- 型エラーや構文エラーは再試行せず、明確なエラーメッセージを提示してください
+
+### エラーの分析
+
+- 同様のエラーが繰り返し発生する場合は、根本的な原因を分析してください
+- エラーパターンを特定し、一般化された解決策を提案してください
+- コードの改善提案があれば、それも記録してください
 ```
 
-## 設定項目の説明
+## 使用方法
 
-| 設定項目 | 説明 |
-|---------|------|
-| `logger` | 使用するMCPロガーの名前 |
-| `log_on_error` | エラー時に自動ログ記録を有効化 |
-| `error_log_dir` | エラーログの保存先ディレクトリ |
-| `include_context` | エラー発生時の文脈情報を含める |
-| `include_stacktrace` | スタックトレース情報を含める |
-| `log_before_retry` | 再試行前にログを記録する |
-| `notify_on_critical` | 重大エラー発生時に通知する |
-| `max_retries` | 最大再試行回数 |
+`.clinerules`ファイルにこのセクションを追加することで、Rooはエラー発生時に上記の指示に従って行動します。これはRooへの指示（プロンプト）として機能し、Rooの行動を導きます。
 
-## 実装方法
-
-Clineがこれらの設定を読み取り、エラー発生時に以下の処理を行います：
-
-1. エラーが発生したことを検知
-2. `.clinerules`のエラーハンドリング設定を読み込み
-3. `roo-activity-logger`にエラー情報を送信
-
-```typescript
-// エラー発生時のログ記録例（Cline内部実装イメージ）
-async function handleError(error: Error, context: any) {
-  if (clinerules.errorHandling?.log_on_error) {
-    await mcp.callTool({
-      server: clinerules.errorHandling.logger,
-      tool: 'log_activity',
-      arguments: {
-        type: 'error_encountered',
-        summary: `エラー: ${error.message}`,
-        level: 'error',
-        details: {
-          error_type: error.name,
-          stack_trace: clinerules.errorHandling.include_stacktrace ? error.stack : undefined,
-          error_code: (error as any).code
-        },
-        intention: '自動エラー記録',
-        context: clinerules.errorHandling.include_context ?
-          `エラー発生時の実行コンテキスト: ${JSON.stringify(context)}` : undefined,
-        logsDir: clinerules.errorHandling.error_log_dir
-      }
-    });
-  }
-
-  // 再試行ロジックなど...
-}
-```
 
 ## ログ出力例
 
