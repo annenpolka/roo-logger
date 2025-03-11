@@ -173,6 +173,14 @@ class RooActivityLogger {
                 description: '活動の詳細情報',
                 additionalProperties: true,
               },
+              intention: {
+                type: 'string',
+                description: '活動を行う意図・目的を説明するテキスト',
+              },
+              context: {
+                type: 'string',
+                description: '活動の文脈情報を説明するテキスト',
+              },
               logsDir: {
                 type: 'string',
                 description: 'このアクティビティのログを保存するディレクトリのパス（絶対パスまたは相対パス）',
@@ -278,6 +286,8 @@ class RooActivityLogger {
       level: args.level || LogLevels.INFO,
       summary: args.summary,
       details: args.details,
+      intention: args.intention,
+      context: args.context,
     };
 
     // ログディレクトリが指定されている場合は一時的にそのディレクトリを使用

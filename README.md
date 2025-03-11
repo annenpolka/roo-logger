@@ -23,6 +23,8 @@ Rooの活動を自動的に記録するMCPサーバー
   - ログレベル (debug, info, warn, error)
   - 概要
   - 詳細情報（任意の構造データ）
+  - 活動の意図・目的
+  - 活動の文脈情報
 
 - **保存**: 日付ベースのJSONファイルに保存
 
@@ -76,6 +78,8 @@ node dist/index.js -d /path/to/logs
     "command": "npm install",
     "directory": "/path/to/project"
   },
+  "intention": "プロジェクトの依存関係を更新するため", // オプション: 活動の意図・目的
+  "context": "新機能実装のための準備作業として", // オプション: 活動の文脈
   "logsDir": "custom/logs/dir" // オプション: カスタムログディレクトリ
 }
 ```

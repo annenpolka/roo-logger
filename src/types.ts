@@ -43,7 +43,12 @@ export type ActivityLog = Readonly<{
   type: ActivityType;
   level: LogLevel;
   summary: string;
+  /** 活動の詳細情報（任意の構造データ） */
   details?: Readonly<Record<string, unknown>>;
+  /** 活動が行われた意図・目的 */
+  intention?: string;
+  /** 活動が行われた文脈情報 */
+  context?: string;
 }>;
 
 /**
@@ -55,6 +60,10 @@ export type LogActivityArgs = Readonly<{
   level?: LogLevel;
   details?: Readonly<Record<string, unknown>>;
   logsDir?: string; // ログの保存先ディレクトリ（オプション）
+  /** 活動を行う意図・目的を説明するテキスト */
+  intention?: string;
+  /** 活動の文脈情報を説明するテキスト */
+  context?: string;
 }>;
 
 /**
