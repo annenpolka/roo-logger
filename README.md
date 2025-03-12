@@ -125,12 +125,6 @@ Clineの設定ファイル（`cline_mcp_settings.json`）に以下を追加し�
       ],
       "env": {},
       "disabled": false,
-      "alwaysAllow": [
-        "log_activity",
-        "get_log_files",
-        "search_logs"
-      ],
-      "timeout": 300
     }
   }
 }
