@@ -212,14 +212,14 @@ class RooActivityLogger {
         },
         {
           name: 'search_logs',
-          description: 'ログを検索します',
+          description: 'ログを検索します。typeのみの指定（例: {"type": "command_execution"}）や、他の条件との組み合わせなど、柔軟な検索が可能です。',
           inputSchema: {
             type: 'object',
             properties: {
               type: {
                 type: 'string',
                 enum: Object.values(ActivityTypes),
-                description: '活動の種類でフィルタ',
+                description: '活動の種類でフィルタ（例: "command_execution", "code_generation"など）',
               },
               level: {
                 type: 'string',
