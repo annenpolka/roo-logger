@@ -7,21 +7,20 @@ import {
   ListToolsRequestSchema,
   McpError,
 } from '@modelcontextprotocol/sdk/types.js';
+import { format } from 'date-fns';
 import { promises as fs } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { v4 as uuidv4 } from 'uuid';
-import { format } from 'date-fns';
 
 import {
-  ActivityType,
+  ActivityLog,
   ActivityTypes,
+  GetLogFilesArgs,
   LogActivityArgs,
   LogLevels,
   LogResult,
-  ActivityLog,
-  SearchLogsArgs,
-  GetLogFilesArgs,
+  SearchLogsArgs
 } from './types.js';
 
 // ディレクトリ関連の設定
@@ -184,6 +183,21 @@ class RooActivityLogger {
               logsDir: {
                 type: 'string',
                 description: 'このアクティビティのログを保存するディレクトリのパス（絶対パスまたは相対パス）',
+              },
+              parentId: {
+                type: 'string',
+                description: '親アクティビティのID（親子関係を確立する場合）',
+              },
+              sequence: {
+                type: 'number',
+                description: 'シーケンス番号（関連アクティビティの順序付け）',
+              },
+              relatedIds: {
+                type: 'array',
+                items: {
+                  type: 'string'
+                },
+                description: '関連するアクティビティのID配列（グループ化用）',
               }
             },
             required: ['type', 'summary'],
@@ -250,6 +264,29 @@ class RooActivityLogger {
                 description: 'スキップするログ数',
                 default: 0,
               },
+              parentId: {
+                type: 'string',
+                description: '親アクティビティIDでフィルタリング',
+              },
+              sequenceFrom: {
+                type: 'number',
+                description: 'シーケンス範囲（開始）でフィルタリング',
+              },
+              sequenceTo: {
+                type: 'number',
+                description: 'シーケンス範囲（終了）でフィルタリング',
+              },
+              relatedId: {
+                type: 'string',
+                description: '関連アクティビティIDでフィルタリング（このIDが関連IDsに含まれるログを検索）',
+              },
+              relatedIds: {
+                type: 'array',
+                items: {
+                  type: 'string'
+                },
+                description: '複数の関連アクティビティIDでフィルタリング（これらのIDのいずれかが関連IDsに含まれるログを検索）',
+              },
             },
             additionalProperties: false,
           },
@@ -288,6 +325,9 @@ class RooActivityLogger {
       details: args.details,
       intention: args.intention,
       context: args.context,
+      parentId: args.parentId,
+      sequence: args.sequence,
+      relatedIds: args.relatedIds,
     };
 
     // ログディレクトリが指定されている場合は一時的にそのディレクトリを使用
@@ -417,6 +457,38 @@ class RooActivityLogger {
         filteredLogs = filteredLogs.filter(log =>
           log.summary.toLowerCase().includes(searchTextLower) ||
           JSON.stringify(log.details).toLowerCase().includes(searchTextLower)
+        );
+      }
+
+      // 親子関係による検索
+      if (args.parentId) {
+        filteredLogs = filteredLogs.filter(log => log.parentId === args.parentId);
+      }
+
+      // シーケンス範囲による検索
+      if (args.sequenceFrom !== undefined) {
+        filteredLogs = filteredLogs.filter(log =>
+          log.sequence !== undefined && log.sequence >= args.sequenceFrom!
+        );
+      }
+
+      if (args.sequenceTo !== undefined) {
+        filteredLogs = filteredLogs.filter(log =>
+          log.sequence !== undefined && log.sequence <= args.sequenceTo!
+        );
+      }
+
+      // 関連アクティビティIDによる検索
+      if (args.relatedId) {
+        filteredLogs = filteredLogs.filter(log =>
+          log.relatedIds?.includes(args.relatedId!)
+        );
+      }
+
+      // 複数の関連アクティビティIDのいずれかが含まれるものを検索
+      if (args.relatedIds && args.relatedIds.length > 0) {
+        filteredLogs = filteredLogs.filter(log =>
+          log.relatedIds?.some(id => args.relatedIds?.includes(id))
         );
       }
 

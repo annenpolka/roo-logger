@@ -49,6 +49,12 @@ export type ActivityLog = Readonly<{
   intention?: string;
   /** 活動が行われた文脈情報 */
   context?: string;
+  /** 親アクティビティID（親子関係用） */
+  parentId?: string;
+  /** シーケンス番号（関連アクティビティの順序） */
+  sequence?: number;
+  /** 関連するアクティビティのID配列（グループ化用） */
+  relatedIds?: readonly string[];
 }>;
 
 /**
@@ -64,6 +70,12 @@ export type LogActivityArgs = Readonly<{
   intention?: string;
   /** 活動の文脈情報を説明するテキスト */
   context?: string;
+  /** 親アクティビティID（親子関係用） */
+  parentId?: string;
+  /** シーケンス番号（関連アクティビティの順序） */
+  sequence?: number;
+  /** 関連するアクティビティのID配列（グループ化用） */
+  relatedIds?: readonly string[];
 }>;
 
 /**
@@ -85,6 +97,16 @@ export type SearchLogsArgs = Readonly<{
   searchText?: string;
   limit?: number;
   offset?: number;
+  /** 親アクティビティIDでフィルタリング */
+  parentId?: string;
+  /** シーケンス範囲（開始）でフィルタリング */
+  sequenceFrom?: number;
+  /** シーケンス範囲（終了）でフィルタリング */
+  sequenceTo?: number;
+  /** 関連アクティビティIDでフィルタリング（このIDが関連IDsに含まれるログを検索） */
+  relatedId?: string;
+  /** 複数の関連アクティビティIDでフィルタリング（これらのIDのいずれかが関連IDsに含まれるログを検索） */
+  relatedIds?: readonly string[];
 }>;
 
 /**
