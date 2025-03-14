@@ -148,56 +148,56 @@ class RooActivityLogger {
       tools: [
         {
           name: 'log_activity',
-          description: 'Rooの活動を記録します',
+          description: 'Rooの活動を記録します。コマンド実行、コード生成、ファイル操作、エラー発生、判断記録、会話記録など様々な活動タイプをサポートし、活動の意図や文脈とともに構造化されたログを保存します。日付ベースのJSONファイルに保存され、階層関係の管理や関連アクティビティのグループ化もサポートしています。',
           inputSchema: {
             type: 'object',
             properties: {
               type: {
                 type: 'string',
                 enum: Object.values(ActivityTypes),
-                description: '活動の種類',
+                description: '活動の種類（command_execution:コマンド実行、code_generation:コード生成、file_operation:ファイル操作、error_encountered:エラー発生、decision_made:判断記録、conversation:会話記録）',
               },
               summary: {
                 type: 'string',
-                description: '活動の要約',
+                description: '活動の要約（例: "npmコマンドを実行"、"READMEファイルの更新"など、活動内容を簡潔に表すテキスト）',
               },
               level: {
                 type: 'string',
                 enum: Object.values(LogLevels),
-                description: 'ログレベル',
+                description: 'ログレベル（debug:詳細情報、info:通常情報、warn:警告、error:エラー）。通常の活動にはinfo、詳細なデバッグ情報にはdebug、警告にはwarn、エラーにはerrorを使用します。',
                 default: LogLevels.INFO,
               },
               details: {
                 type: 'object',
-                description: '活動の詳細情報',
+                description: '活動の詳細情報（任意のJSON構造で、活動に関する付加情報を記録。例: ファイル操作の場合はファイル名やパス、変更行数など具体的な情報を含む構造化データ）',
                 additionalProperties: true,
               },
               intention: {
                 type: 'string',
-                description: '活動を行う意図・目的を説明するテキスト',
+                description: '活動を行う意図・目的を説明するテキスト（例: "ドキュメントを明確化して使いやすくするため"、"コードの品質を向上させるため"など、なぜその活動が必要だったかを説明）',
               },
               context: {
                 type: 'string',
-                description: '活動の文脈情報を説明するテキスト',
+                description: '活動の文脈情報を説明するテキスト（例: "ユーザーフィードバックに基づく改善作業の一環として"、"新機能実装のための準備作業として"など、活動が行われた背景や状況）',
               },
               logsDir: {
                 type: 'string',
-                description: 'このアクティビティのログを保存するディレクトリのパス（絶対パスまたは相対パス）',
+                description: 'このアクティビティのログを保存するディレクトリのパス（絶対パスまたは相対パス。例: "logs/activity"、"logs/error"、"logs/analytics"など。指定しない場合はデフォルトのログディレクトリが使用されます）',
               },
               parentId: {
                 type: 'string',
-                description: '親アクティビティのID（親子関係を確立する場合）',
+                description: '親アクティビティのID（親子関係を確立する場合。例: 大きなタスクの一部として実行される複数の関連アクティビティをグループ化する場合に、親タスクのIDを指定）',
               },
               sequence: {
                 type: 'number',
-                description: 'シーケンス番号（関連アクティビティの順序付け）',
+                description: 'シーケンス番号（関連アクティビティの順序付け。例: 同じ親を持つ複数のアクティビティの実行順序を1, 2, 3...と指定し、後から順序通りに処理や分析できるようにする）',
               },
               relatedIds: {
                 type: 'array',
                 items: {
                   type: 'string'
                 },
-                description: '関連するアクティビティのID配列（グループ化用）',
+                description: '関連するアクティビティのID配列（グループ化用。例: 直接の親子関係はないが関連性のある複数のアクティビティをリンクさせる場合に、それらのIDをリストとして指定）',
               }
             },
             required: ['type', 'summary', 'intention', 'context'],
@@ -206,18 +206,18 @@ class RooActivityLogger {
         },
         {
           name: 'get_log_files',
-          description: '保存されたログファイルの一覧を取得します',
+          description: '保存されたログファイルの一覧を取得します。日付ベースのログファイル一覧を取得し、取得数の制限（limit）やスキップする数（offset）を指定したページネーション形式での取得が可能です。ファイルは新しい順（降順）でソートされます。',
           inputSchema: {
             type: 'object',
             properties: {
               limit: {
                 type: 'number',
-                description: '取得する最大ファイル数',
+                description: '取得する最大ファイル数（例: 5を指定すると最新の5つのログファイルのみを取得。大量のログファイルがある場合にページサイズを制限するのに有用）',
                 default: 10,
               },
               offset: {
                 type: 'number',
-                description: 'スキップするファイル数',
+                description: 'スキップするファイル数（例: offset=10, limit=5とすると、11〜15番目のファイルを取得。ページネーションを実装する場合に使用）',
                 default: 0,
               },
             },
@@ -226,66 +226,66 @@ class RooActivityLogger {
         },
         {
           name: 'search_logs',
-          description: 'ログを検索します。typeのみの指定（例: {"type": "command_execution"}）や、他の条件との組み合わせなど、柔軟な検索が可能です。',
+          description: 'ログを検索します。活動タイプ、ログレベル、日付範囲、テキスト内容など様々な条件を組み合わせた柔軟な検索が可能です。階層関係や関連性に基づいた検索、シーケンス番号による範囲指定、ページネーションもサポートしています。すべてのパラメータは任意で、指定がない場合は最新ログが返されます。',
           inputSchema: {
             type: 'object',
             properties: {
               type: {
                 type: 'string',
                 enum: Object.values(ActivityTypes),
-                description: '活動の種類でフィルタ（例: "command_execution", "code_generation"など）',
+                description: '活動の種類でフィルタ（例: "command_execution"でコマンド実行ログのみ、"code_generation"でコード生成ログのみを取得。単一タイプのアクティビティに絞った分析に有用）',
               },
               level: {
                 type: 'string',
                 enum: Object.values(LogLevels),
-                description: 'ログレベルでフィルタ',
+                description: 'ログレベルでフィルタ（例: "error"でエラーログのみ、"warn"で警告ログのみを取得。重要度に基づいたログのフィルタリングに使用）',
               },
               startDate: {
                 type: 'string',
                 format: 'date',
-                description: '検索開始日（YYYY-MM-DD）',
+                description: '検索開始日（YYYY-MM-DD形式。例: "2025-01-01"と指定すると、この日付以降のログのみが検索対象に。特定期間のアクティビティ分析に使用）',
               },
               endDate: {
                 type: 'string',
                 format: 'date',
-                description: '検索終了日（YYYY-MM-DD）',
+                description: '検索終了日（YYYY-MM-DD形式。例: "2025-03-31"と指定すると、この日付以前のログのみが検索対象に。startDateと組み合わせて日付範囲を指定）',
               },
               searchText: {
                 type: 'string',
-                description: '検索するテキスト',
+                description: '検索するテキスト（例: "webpack"と指定するとsummaryやdetailsにこのテキストを含むログを検索。特定のキーワードに関連するアクティビティを見つけるのに有用）',
               },
               limit: {
                 type: 'number',
-                description: '取得する最大ログ数',
+                description: '取得する最大ログ数（例: 20を指定すると、条件に一致する最新の20件のみを取得。大量のログがある場合にページサイズを制限するのに有用）',
                 default: 50,
               },
               offset: {
                 type: 'number',
-                description: 'スキップするログ数',
+                description: 'スキップするログ数（例: offset=50, limit=50とすると、51〜100番目のログを取得。ページネーションを実装する場合に使用）',
                 default: 0,
               },
               parentId: {
                 type: 'string',
-                description: '親アクティビティIDでフィルタリング',
+                description: '親アクティビティIDでフィルタリング（例: 特定の親タスクに属するすべてのサブタスクを検索する場合に親タスクのIDを指定。階層構造のあるアクティビティを分析する際に有用）',
               },
               sequenceFrom: {
                 type: 'number',
-                description: 'シーケンス範囲（開始）でフィルタリング',
+                description: 'シーケンス範囲（開始）でフィルタリング（例: 5以上のシーケンス番号を持つログのみを取得。処理フローの特定部分以降に注目する場合に有用）',
               },
               sequenceTo: {
                 type: 'number',
-                description: 'シーケンス範囲（終了）でフィルタリング',
+                description: 'シーケンス範囲（終了）でフィルタリング（例: 10以下のシーケンス番号を持つログのみを取得。sequenceFromと組み合わせて特定範囲のアクティビティを分析する場合に使用）',
               },
               relatedId: {
                 type: 'string',
-                description: '関連アクティビティIDでフィルタリング（このIDが関連IDsに含まれるログを検索）',
+                description: '関連アクティビティIDでフィルタリング（例: 特定のIDを関連IDsリストに含むすべてのログを検索。特定のアクティビティに関連するすべてのアクティビティを見つける場合に有用）',
               },
               relatedIds: {
                 type: 'array',
                 items: {
                   type: 'string'
                 },
-                description: '複数の関連アクティビティIDでフィルタリング（これらのIDのいずれかが関連IDsに含まれるログを検索）',
+                description: '複数の関連アクティビティIDでフィルタリング（例: 指定したIDリストのいずれかを関連IDsに含むログを検索。複数の異なるアクティビティに関連するログをまとめて検索する場合に有用）',
               },
             },
             additionalProperties: false,
