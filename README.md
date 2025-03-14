@@ -67,58 +67,168 @@ node dist/index.js --logs-dir /path/to/logs
 node dist/index.js -d /path/to/logs
 ```
 
-### MCPツール
+## MCPツールの使用方法
 
-#### log_activity
+### log_activity - 活動の記録
 
-活動を記録します。
+活動を記録するためのツールです。
 
-```json
+#### 基本的な使用例
+
+```javascript
+// 必須パラメータを指定した最小限の呼び出し
 {
   "type": "command_execution",
   "summary": "npmコマンドを実行",
+  "intention": "プロジェクトの依存関係を更新するため",
+  "context": "新機能実装のための準備作業として"
+}
+```
+
+#### パラメータ一覧
+
+| パラメータ名 | 必須 | 型 | 説明 |
+|------------|------|-----|-----|
+| `type` | ✅ | string | 活動の種類（`command_execution`, `code_generation`, `file_operation`, `error_encountered`, `decision_made`, `conversation`） |
+| `summary` | ✅ | string | 活動の要約 |
+| `intention` | ✅ | string | 活動を行う意図・目的を説明するテキスト |
+| `context` | ✅ | string | 活動の文脈情報を説明するテキスト |
+| `level` | ❌ | string | ログレベル（`debug`, `info`, `warn`, `error`）。デフォルト: `info` |
+| `details` | ❌ | object | 活動の詳細情報（任意のJSON構造） |
+| `logsDir` | ❌ | string | 保存先カスタムディレクトリ |
+| `parentId` | ❌ | string | 親アクティビティID |
+| `sequence` | ❌ | number | シーケンス番号 |
+| `relatedIds` | ❌ | string[] | 関連アクティビティID配列 |
+
+#### 詳細な使用例
+
+```javascript
+// すべてのパラメータを使った詳細な活動記録
+{
+  "type": "file_operation",
+  "summary": "READMEファイルの更新",
+  "intention": "ドキュメントを明確化して使いやすくするため",
+  "context": "ユーザーフィードバックに基づく改善作業の一環として",
+  "level": "info",
   "details": {
-    "command": "npm install",
-    "directory": "/path/to/project"
+    "file": "README.md",
+    "operation": "update",
+    "changedLines": 15
   },
-  "intention": "プロジェクトの依存関係を更新するため", // オプション: 活動の意図・目的
-  "context": "新機能実装のための準備作業として", // オプション: 活動の文脈
-  "logsDir": "custom/logs/dir", // オプション: カスタムログディレクトリ
-  "parentId": "00112233-4455-6677-8899-aabbccddeeff", // オプション: 親アクティビティID
-  "sequence": 1, // オプション: シーケンス番号
-  "relatedIds": ["11223344-5566-7788-99aa-bbccddeeff00", "22334455-6677-8899-aabb-ccddeeff1122"] // オプション: 関連アクティビティのID配列
+  "logsDir": "logs/activity",
+  "sequence": 3,
+  "relatedIds": ["11223344-5566-7788-99aa-bbccddeeff00"]
 }
 ```
 
-#### get_log_files
+### get_log_files - ログファイル一覧の取得
 
-ログファイルの一覧を取得します。
+保存されたログファイルの一覧を取得するためのツールです。
 
-```json
+#### 基本的な使用例
+
+```javascript
+// パラメータなしで呼び出し（デフォルト値が使用される）
+{}
+```
+
+#### パラメータ一覧
+
+| パラメータ名 | 必須 | 型 | 説明 |
+|------------|------|-----|-----|
+| `limit` | ❌ | number | 取得する最大ファイル数。デフォルト: `10` |
+| `offset` | ❌ | number | スキップするファイル数。デフォルト: `0` |
+
+#### 詳細な使用例
+
+```javascript
+// カスタムパラメータを指定して呼び出し
 {
-  "limit": 10, // 取得する最大ファイル数（デフォルト: 10）
-  "offset": 0  // スキップするファイル数（デフォルト: 0）
+  "limit": 5,
+  "offset": 10
 }
 ```
 
-#### search_logs
+### search_logs - ログの検索
 
-ログを検索します。
+保存されたログを様々な条件で検索するためのツールです。**すべてのパラメータが任意**です。パラメータを指定しない場合は、制限数（limit）内のすべてのログが返されます。
 
-```json
+#### 基本的な使用例
+
+```javascript
+// 空のオブジェクトで呼び出し - 最新の50件のログを取得
+{}
+
+// 活動タイプのみでフィルタリング
 {
-  "type": "command_execution", // 活動タイプでフィルタ
-  "level": "info",            // ログレベルでフィルタ
-  "startDate": "2025-01-01",  // 検索開始日
-  "endDate": "2025-12-31",    // 検索終了日
-  "searchText": "npm",        // テキスト検索
-  "limit": 50,                // 取得する最大ログ数（デフォルト: 50）
-  "offset": 0,                // スキップするログ数（デフォルト: 0）
-  "parentId": "00112233-4455-6677-8899-aabbccddeeff", // 親アクティビティIDでフィルタ
-  "sequenceFrom": 1,          // シーケンス番号の範囲（開始）
-  "sequenceTo": 5,            // シーケンス番号の範囲（終了）
-  "relatedId": "11223344-5566-7788-99aa-bbccddeeff00", // 関連アクティビティIDでフィルタ
-  "relatedIds": ["22334455-6677-8899-aabb-ccddeeff1122", "33445566-7788-99aa-bbcc-ddeeff112233"] // 複数の関連アクティビティIDでフィルタ
+  "type": "command_execution"
+}
+```
+
+#### パラメータ一覧（すべて任意）
+
+| パラメータ名 | 型 | 説明 |
+|------------|-----|-----|
+| `type` | string | 活動タイプでフィルタリング（`command_execution`, `code_generation`, `file_operation`, `error_encountered`, `decision_made`, `conversation`） |
+| `level` | string | ログレベルでフィルタリング（`debug`, `info`, `warn`, `error`） |
+| `startDate` | string | 検索開始日（YYYY-MM-DD形式） |
+| `endDate` | string | 検索終了日（YYYY-MM-DD形式） |
+| `searchText` | string | ログの概要または詳細に含まれるテキストで検索 |
+| `limit` | number | 取得する最大ログ数。デフォルト: `50` |
+| `offset` | number | スキップするログ数。デフォルト: `0` |
+| `parentId` | string | 特定の親アクティビティに関連するログのみを取得 |
+| `sequenceFrom` | number | シーケンス番号の下限値 |
+| `sequenceTo` | number | シーケンス番号の上限値 |
+| `relatedId` | string | 特定のIDが関連IDsに含まれるログを検索 |
+| `relatedIds` | string[] | これらのIDのいずれかが関連IDsに含まれるログを検索 |
+
+#### 複合条件での使用例
+
+```javascript
+// タイプとレベルを組み合わせたフィルタリング
+{
+  "type": "file_operation",
+  "level": "info"
+}
+
+// 日付範囲とテキスト検索の組み合わせ
+{
+  "startDate": "2025-01-01",
+  "endDate": "2025-03-31",
+  "searchText": "webpack"
+}
+
+// 高度なフィルタリング
+{
+  "type": "code_generation",
+  "startDate": "2025-03-01",
+  "endDate": "2025-03-14",
+  "searchText": "React",
+  "limit": 20,
+  "sequenceFrom": 1,
+  "sequenceTo": 10
+}
+```
+
+#### 階層関係・関連性による検索
+
+```javascript
+// 親子関係による検索
+{
+  "parentId": "00112233-4455-6677-8899-aabbccddeeff"
+}
+
+// 関連アクティビティによる検索
+{
+  "relatedId": "11223344-5566-7788-99aa-bbccddeeff00"
+}
+
+// 複数の関連アクティビティのいずれかに関連するログの検索
+{
+  "relatedIds": [
+    "11223344-5566-7788-99aa-bbccddeeff00",
+    "22334455-6677-8899-aabb-ccddeeff1122"
+  ]
 }
 ```
 

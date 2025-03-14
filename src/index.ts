@@ -200,7 +200,7 @@ class RooActivityLogger {
                 description: '関連するアクティビティのID配列（グループ化用）',
               }
             },
-            required: ['type', 'summary'],
+            required: ['type', 'summary', 'intention', 'context'],
             additionalProperties: false,
           },
         },
