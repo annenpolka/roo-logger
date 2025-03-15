@@ -55,16 +55,13 @@ npm run build
 
 ### MCP サーバーとして実行
 ```bash
-# ログディレクトリの指定は必須かつ絶対パスのみ
-node dist/index.js --logs-dir /absolute/path/to/logs
-# または
-node dist/index.js -d /absolute/path/to/logs
+# シンプルに実行するだけで使用できます
+node dist/index.js
 ```
 
 ### 注意事項
 
-- **ログディレクトリは絶対パスで指定する必要があります**
-- 相対パスは使用できません
+- デフォルトでは、プロジェクトルートディレクトリの 'logs' フォルダにログが保存されます
 - 指定したディレクトリが存在しない場合は自動的に作成されます
 ```
 
@@ -263,7 +260,7 @@ Cline の設定ファイル（`cline_mcp_settings.json`）に以下を追加し�
   "mcpServers": {
     "roo-activity-logger": {
       "command": "node",
-      "args": ["/path/to/roo-logger/dist/index.js", "--logs-dir", "/absolute/path/to/logs"],
+      "args": ["/path/to/roo-logger/dist/index.js"],
       "env": {},
       "disabled": false
     }

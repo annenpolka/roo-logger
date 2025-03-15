@@ -32,15 +32,16 @@ const ROOT_DIR = path.resolve(__dirname, '..');
  * 設定の型
  */
 interface LoggerConfig {
-  logsDir: string;  // ログディレクトリは必須（絶対パス）
+  logsDir: string;  // ログディレクトリパス（絶対パス）
   logFilePrefix: string;
   logFileExtension: string;
 }
 
 /**
- * デフォルト設定（ログディレクトリは必須引数なのでここでは指定しない）
+ * デフォルト設定
  */
-const DEFAULT_CONFIG: Omit<LoggerConfig, 'logsDir'> = {
+const DEFAULT_CONFIG: LoggerConfig = {
+  logsDir: path.join(ROOT_DIR, 'logs'),  // デフォルトはプロジェクトルートの logs ディレクトリ
   logFilePrefix: 'roo-activity-',
   logFileExtension: '.json'
 };
@@ -49,17 +50,17 @@ class RooActivityLogger {
   private server: Server;
   private config: LoggerConfig;
 
-  constructor(logsDir: string) {
-    // ログディレクトリが絶対パスかチェック
-    if (!path.isAbsolute(logsDir)) {
-      throw new Error(`ログディレクトリは絶対パスで指定する必要があります: ${logsDir}`);
-    }
-
-    // 設定を初期化
+  constructor(config?: Partial<LoggerConfig>) {
+    // 設定を初期化（デフォルト設定とユーザー指定の設定をマージ）
     this.config = {
-      logsDir,
-      ...DEFAULT_CONFIG
+      ...DEFAULT_CONFIG,
+      ...config
     };
+
+    // ログディレクトリが絶対パスかチェック
+    if (!path.isAbsolute(this.config.logsDir)) {
+      throw new Error(`ログディレクトリは絶対パスで指定する必要があります: ${this.config.logsDir}`);
+    }
 
     // MCPサーバーの初期化
     this.server = new Server(
@@ -660,58 +661,28 @@ class RooActivityLogger {
   }
 }
 
-// コマンドライン引数を解析
-function parseArgs(): { logsDir: string } {
-  const args: { logsDir: string } = { logsDir: '' };
-
-  for (let i = 2; i < process.argv.length; i++) {
-    const arg = process.argv[i];
-
-    if (arg === '--logs-dir' || arg === '-d') {
-      if (i + 1 < process.argv.length) {
-        args.logsDir = process.argv[++i];
-      }
-    }
-  }
-
-  return args;
-}
-
 // サーバー起動時の設定
 async function main() {
   try {
-    // コマンドライン引数を解析
-    const cmdArgs = parseArgs();
-
-    // ログディレクトリが必須
-    if (!cmdArgs.logsDir) {
-      console.error('エラー: ログディレクトリを指定してください (--logs-dir <absolute_path>)');
-      printHelp();
-      process.exit(1);
-    }
-
-    // 絶対パスの検証
-    if (!path.isAbsolute(cmdArgs.logsDir)) {
-      console.error(`エラー: ログディレクトリは絶対パスで指定する必要があります: ${cmdArgs.logsDir}`);
-      process.exit(1);
-    }
+    // デフォルトのログディレクトリを使用
+    const logsDir = DEFAULT_CONFIG.logsDir;
 
     // ディレクトリの存在確認と作成
     try {
-      await fs.access(cmdArgs.logsDir);
+      await fs.access(logsDir);
     } catch (error) {
       try {
-        await fs.mkdir(cmdArgs.logsDir, { recursive: true });
-        console.log(`ログディレクトリを作成しました: ${cmdArgs.logsDir}`);
+        await fs.mkdir(logsDir, { recursive: true });
+        console.log(`ログディレクトリを作成しました: ${logsDir}`);
       } catch (mkdirError) {
-        console.error(`エラー: ログディレクトリの作成に失敗しました: ${cmdArgs.logsDir}`);
+        console.error(`エラー: ログディレクトリの作成に失敗しました: ${logsDir}`);
         console.error(mkdirError);
         process.exit(1);
       }
     }
 
     // サーバーを起動
-    const server = new RooActivityLogger(cmdArgs.logsDir);
+    const server = new RooActivityLogger();
     await server.run();
   } catch (error) {
     console.error('サーバーの起動に失敗しました:', error);
@@ -727,14 +698,9 @@ function printHelp() {
 Roo Activity Logger - Rooの活動を記録するMCPサーバー
 
 使用方法:
-  node dist/index.js [options]
+  node dist/index.js
 
-オプション:
-  --logs-dir, -d <path>  ログファイルの保存先ディレクトリを指定（必須・絶対パスのみ）
-  --help, -h             このヘルプメッセージを表示
-
-例:
-  node dist/index.js --logs-dir /absolute/path/to/logs
+デフォルトでは、プロジェクトルートディレクトリの 'logs' フォルダにログを保存します。
   `);
 }
 
