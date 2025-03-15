@@ -2,10 +2,10 @@
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import {
-  CallToolRequestSchema,
-  ErrorCode,
-  ListToolsRequestSchema,
-  McpError,
+    CallToolRequestSchema,
+    ErrorCode,
+    ListToolsRequestSchema,
+    McpError,
 } from '@modelcontextprotocol/sdk/types.js';
 import { format } from 'date-fns';
 import { promises as fs } from 'fs';
@@ -14,18 +14,18 @@ import { fileURLToPath } from 'url';
 import { v4 as uuidv4 } from 'uuid';
 
 import {
-  ActivityLog,
-  ActivityTypes,
-  GetLogFilesArgs,
-  LogActivityArgs,
-  LogLevels,
-  LogResult,
-  SearchLogsArgs
+    ActivityLog,
+    ActivityTypes,
+    GetLogFilesArgs,
+    LogActivityArgs,
+    LogLevels,
+    LogResult,
+    SearchLogsArgs
 } from './types.js';
 
 // ディレクトリ関連の設定
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const DEFAULT_LOGS_DIR = path.resolve(__dirname, '../logs');
+const DEFAULT_LOGS_DIR = path.resolve(process.cwd(), 'logs');
 
 // 設定の型
 interface LoggerConfig {
@@ -101,7 +101,7 @@ class RooActivityLogger {
         if (customLogsDir) {
           const logsDir = path.isAbsolute(customLogsDir)
             ? customLogsDir
-            : path.resolve(path.dirname(path.dirname(__dirname)), customLogsDir);
+            : path.resolve(process.cwd(), customLogsDir);
 
           this.config.logsDir = logsDir;
         }
