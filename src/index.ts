@@ -2,47 +2,64 @@
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import {
-    CallToolRequestSchema,
-    ErrorCode,
-    ListToolsRequestSchema,
-    McpError,
+  CallToolRequestSchema,
+  ErrorCode,
+  ListToolsRequestSchema,
+  McpError,
 } from '@modelcontextprotocol/sdk/types.js';
 import { format } from 'date-fns';
 import { promises as fs } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { v4 as uuidv4 } from 'uuid';
-
 import {
-    ActivityLog,
-    ActivityTypes,
-    GetLogFilesArgs,
-    LogActivityArgs,
-    LogLevels,
-    LogResult,
-    SearchLogsArgs
+  ActivityLog,
+  ActivityTypes,
+  GetLogFilesArgs,
+  LogActivityArgs,
+  LogLevels,
+  LogResult,
+  SearchLogsArgs,
+  ToolConfigParams
 } from './types.js';
 
 // ディレクトリ関連の設定
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const DEFAULT_LOGS_DIR = path.resolve(process.cwd(), 'logs');
+// サーバーのルートディレクトリの取得
+const ROOT_DIR = path.resolve(__dirname, '..');
 
-// 設定の型
+/**
+ * 設定の型
+ */
 interface LoggerConfig {
-  logsDir: string;
+  logsDir: string;  // ログディレクトリは必須（絶対パス）
+  logFilePrefix: string;
+  logFileExtension: string;
 }
 
-// デフォルト設定
-const DEFAULT_CONFIG: LoggerConfig = {
-  logsDir: DEFAULT_LOGS_DIR
+/**
+ * デフォルト設定（ログディレクトリは必須引数なのでここでは指定しない）
+ */
+const DEFAULT_CONFIG: Omit<LoggerConfig, 'logsDir'> = {
+  logFilePrefix: 'roo-activity-',
+  logFileExtension: '.json'
 };
 
 class RooActivityLogger {
   private server: Server;
   private config: LoggerConfig;
 
-  constructor(config?: Partial<LoggerConfig>) {
-    this.config = { ...DEFAULT_CONFIG, ...config };
+  constructor(logsDir: string) {
+    // ログディレクトリが絶対パスかチェック
+    if (!path.isAbsolute(logsDir)) {
+      throw new Error(`ログディレクトリは絶対パスで指定する必要があります: ${logsDir}`);
+    }
+
+    // 設定を初期化
+    this.config = {
+      logsDir,
+      ...DEFAULT_CONFIG
+    };
 
     // MCPサーバーの初期化
     this.server = new Server(
@@ -85,7 +102,7 @@ class RooActivityLogger {
    * ログファイル名を生成
    */
   private getLogFileName(date: Date = new Date()): string {
-    return `roo-activity-${format(date, 'yyyy-MM-dd')}.json`;
+    return `${this.config.logFilePrefix ?? 'roo-activity-'}${format(date, 'yyyy-MM-dd')}${this.config.logFileExtension ?? '.json'}`;
   }
 
   /**
@@ -99,11 +116,11 @@ class RooActivityLogger {
       try {
         // カスタムディレクトリが指定されていれば、一時的に設定を変更
         if (customLogsDir) {
-          const logsDir = path.isAbsolute(customLogsDir)
-            ? customLogsDir
-            : path.resolve(process.cwd(), customLogsDir);
-
-          this.config.logsDir = logsDir;
+          // 絶対パスでなければエラー
+          if (!path.isAbsolute(customLogsDir)) {
+            return { success: false, error: { message: `ログディレクトリは絶対パスで指定する必要があります: ${customLogsDir}` } };
+          }
+          this.config.logsDir = customLogsDir;
         }
 
         await this.ensureLogsDirectory();
@@ -182,7 +199,7 @@ class RooActivityLogger {
               },
               logsDir: {
                 type: 'string',
-                description: 'このアクティビティのログを保存するディレクトリのパス（絶対パスまたは相対パス。例: "logs/activity"、"logs/error"、"logs/analytics"など。指定しない場合はデフォルトのログディレクトリが使用されます）',
+                description: 'このアクティビティのログを保存するディレクトリのパス（絶対パスのみ。例: "/path/to/logs/activity"、"/path/to/logs/error"など。指定しない場合はデフォルトのログディレクトリが使用されます）',
               },
               parentId: {
                 type: 'string',
@@ -210,6 +227,11 @@ class RooActivityLogger {
           inputSchema: {
             type: 'object',
             properties: {
+              logsDir: {
+                type: 'string',
+                description: 'ログファイルを検索するディレクトリパス（絶対パスのみ）',
+                minLength: 1
+              },
               limit: {
                 type: 'number',
                 description: '取得する最大ファイル数（例: 5を指定すると最新の5つのログファイルのみを取得。大量のログファイルがある場合にページサイズを制限するのに有用）',
@@ -220,7 +242,16 @@ class RooActivityLogger {
                 description: 'スキップするファイル数（例: offset=10, limit=5とすると、11〜15番目のファイルを取得。ページネーションを実装する場合に使用）',
                 default: 0,
               },
+              logFilePrefix: {
+                type: 'string',
+                description: 'ログファイル名のプレフィックス（デフォルト: "roo-activity-"）',
+              },
+              logFileExtension: {
+                type: 'string',
+                description: 'ログファイルの拡張子（デフォルト: ".json"）',
+              },
             },
+            required: ['logsDir'],
             additionalProperties: false,
           },
         },
@@ -230,6 +261,11 @@ class RooActivityLogger {
           inputSchema: {
             type: 'object',
             properties: {
+              logsDir: {
+                type: 'string',
+                description: 'ログディレクトリ（絶対パスのみ）',
+                minLength: 1
+              },
               type: {
                 type: 'string',
                 enum: Object.values(ActivityTypes),
@@ -288,6 +324,7 @@ class RooActivityLogger {
                 description: '複数の関連アクティビティIDでフィルタリング（例: 指定したIDリストのいずれかを関連IDsに含むログを検索。複数の異なるアクティビティに関連するログをまとめて検索する場合に有用）',
               },
             },
+            required: ['logsDir'],
             additionalProperties: false,
           },
         },
@@ -360,14 +397,56 @@ class RooActivityLogger {
    */
   private async handleGetLogFiles(args: GetLogFilesArgs) {
     try {
-      await this.ensureLogsDirectory();
+      // 設定パラメータの検証と適用
+      if (!path.isAbsolute(args.logsDir)) {
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `エラー: ログディレクトリは絶対パスで指定する必要があります: ${args.logsDir}`,
+            },
+          ],
+          isError: true,
+        };
+      }
+
+      // 一時的な設定を適用
+      const tempConfig = {
+        ...this.config,
+        logsDir: args.logsDir
+      };
+
+      if (args.logFilePrefix) {
+        tempConfig.logFilePrefix = args.logFilePrefix;
+      }
+
+      if (args.logFileExtension) {
+        tempConfig.logFileExtension = args.logFileExtension;
+      }
+
+      try {
+        await fs.access(tempConfig.logsDir);
+      } catch {
+        // ディレクトリが存在しない場合
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `エラー: 指定されたログディレクトリが存在しません: ${tempConfig.logsDir}`,
+            },
+          ],
+          isError: true,
+        };
+      }
 
       const limit = args.limit ?? 10;
       const offset = args.offset ?? 0;
 
-      const files = await fs.readdir(this.config.logsDir);
+      const files = await fs.readdir(tempConfig.logsDir);
       const logFiles = files
-        .filter((file: string) => file.startsWith('roo-activity-') && file.endsWith('.json'))
+        .filter((file: string) =>
+          file.startsWith(tempConfig.logFilePrefix) &&
+          file.endsWith(tempConfig.logFileExtension))
         .sort()
         .reverse()
         .slice(offset, offset + limit);
@@ -399,7 +478,47 @@ class RooActivityLogger {
    */
   private async handleSearchLogs(args: SearchLogsArgs) {
     try {
-      await this.ensureLogsDirectory();
+      // 設定パラメータの検証と適用
+      if (!path.isAbsolute(args.logsDir)) {
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `エラー: ログディレクトリは絶対パスで指定する必要があります: ${args.logsDir}`,
+            },
+          ],
+          isError: true,
+        };
+      }
+
+      // 一時的な設定を適用
+      const tempConfig = {
+        ...this.config,
+        logsDir: args.logsDir
+      };
+
+      if (args.logFilePrefix) {
+        tempConfig.logFilePrefix = args.logFilePrefix;
+      }
+
+      if (args.logFileExtension) {
+        tempConfig.logFileExtension = args.logFileExtension;
+      }
+
+      try {
+        await fs.access(tempConfig.logsDir);
+      } catch {
+        // ディレクトリが存在しない場合
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `エラー: 指定されたログディレクトリが存在しません: ${tempConfig.logsDir}`,
+            },
+          ],
+          isError: true,
+        };
+      }
 
       // ファイル名パターンの作成
       let targetFiles: string[] = [];
@@ -409,28 +528,33 @@ class RooActivityLogger {
         const start = new Date(args.startDate);
         const end = new Date(args.endDate);
 
-        const files = await fs.readdir(this.config.logsDir);
+        const files = await fs.readdir(tempConfig.logsDir);
         targetFiles = files.filter((file: string) => {
-          if (!file.startsWith('roo-activity-') || !file.endsWith('.json')) return false;
+          const prefix = tempConfig.logFilePrefix;
+          const extension = tempConfig.logFileExtension;
 
-          const dateStr = file.replace('roo-activity-', '').replace('.json', '');
+          if (!file.startsWith(prefix) || !file.endsWith(extension)) return false;
+
+          const dateStr = file.replace(prefix, '').replace(extension, '');
           const fileDate = new Date(dateStr);
 
           return fileDate >= start && fileDate <= end;
         });
       } else {
         // すべてのファイルを対象にする
-        const files = await fs.readdir(this.config.logsDir);
-        targetFiles = files.filter((file: string) =>
-          file.startsWith('roo-activity-') && file.endsWith('.json')
-        );
+        const files = await fs.readdir(tempConfig.logsDir);
+        targetFiles = files.filter((file: string) => {
+          const prefix = tempConfig.logFilePrefix;
+          const extension = tempConfig.logFileExtension;
+          return file.startsWith(prefix) && file.endsWith(extension);
+        });
       }
 
       // ログの検索
       let allLogs: ActivityLog[] = [];
 
       for (const file of targetFiles) {
-        const filePath = path.join(this.config.logsDir, file);
+        const filePath = path.join(tempConfig.logsDir, file);
         try {
           const content = await fs.readFile(filePath, 'utf-8');
           const logs: ActivityLog[] = JSON.parse(content);
@@ -525,6 +649,7 @@ class RooActivityLogger {
     }
   }
 
+
   /**
    * サーバーの起動
    */
@@ -536,8 +661,8 @@ class RooActivityLogger {
 }
 
 // コマンドライン引数を解析
-function parseArgs(): { logsDir?: string } {
-  const args: { logsDir?: string } = {};
+function parseArgs(): { logsDir: string } {
+  const args: { logsDir: string } = { logsDir: '' };
 
   for (let i = 2; i < process.argv.length; i++) {
     const arg = process.argv[i];
@@ -558,16 +683,35 @@ async function main() {
     // コマンドライン引数を解析
     const cmdArgs = parseArgs();
 
-    // 設定オブジェクトを作成
-    const config: Partial<LoggerConfig> = {};
+    // ログディレクトリが必須
+    if (!cmdArgs.logsDir) {
+      console.error('エラー: ログディレクトリを指定してください (--logs-dir <absolute_path>)');
+      printHelp();
+      process.exit(1);
+    }
 
-    // コマンドライン引数の設定
-    if (cmdArgs.logsDir) {
-      config.logsDir = cmdArgs.logsDir;
+    // 絶対パスの検証
+    if (!path.isAbsolute(cmdArgs.logsDir)) {
+      console.error(`エラー: ログディレクトリは絶対パスで指定する必要があります: ${cmdArgs.logsDir}`);
+      process.exit(1);
+    }
+
+    // ディレクトリの存在確認と作成
+    try {
+      await fs.access(cmdArgs.logsDir);
+    } catch (error) {
+      try {
+        await fs.mkdir(cmdArgs.logsDir, { recursive: true });
+        console.log(`ログディレクトリを作成しました: ${cmdArgs.logsDir}`);
+      } catch (mkdirError) {
+        console.error(`エラー: ログディレクトリの作成に失敗しました: ${cmdArgs.logsDir}`);
+        console.error(mkdirError);
+        process.exit(1);
+      }
     }
 
     // サーバーを起動
-    const server = new RooActivityLogger(config);
+    const server = new RooActivityLogger(cmdArgs.logsDir);
     await server.run();
   } catch (error) {
     console.error('サーバーの起動に失敗しました:', error);
@@ -586,11 +730,11 @@ Roo Activity Logger - Rooの活動を記録するMCPサーバー
   node dist/index.js [options]
 
 オプション:
-  --logs-dir, -d <path>  ログファイルの保存先ディレクトリを指定
+  --logs-dir, -d <path>  ログファイルの保存先ディレクトリを指定（必須・絶対パスのみ）
   --help, -h             このヘルプメッセージを表示
 
 例:
-  node dist/index.js --logs-dir ../activity-logs
+  node dist/index.js --logs-dir /absolute/path/to/logs
   `);
 }
 

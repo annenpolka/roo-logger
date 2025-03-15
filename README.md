@@ -1,14 +1,15 @@
 # Roo Activity Logger
 
-Rooの活動を自動的に記録するMCPサーバー
+Roo の活動を自動的に記録する MCP サーバー
 
 ## 概要
 
-このプロジェクトは、Rooによる開発活動を記録するためのModel Context Protocol（MCP）サーバーを提供します。コマンド実行、コード生成、ファイル操作などの活動を自動的に記録し、後から検索・分析できるようにします。
+このプロジェクトは、Roo による開発活動を記録するための Model Context Protocol（MCP）サーバーを提供します。コマンド実行、コード生成、ファイル操作などの活動を自動的に記録し、後から検索・分析できるようにします。
 
 ## 機能
 
 - **活動記録**: 様々な種類の活動を記録
+
   - コマンド実行 (`command_execution`)
   - コード生成 (`code_generation`)
   - ファイル操作 (`file_operation`)
@@ -17,7 +18,8 @@ Rooの活動を自動的に記録するMCPサーバー
   - 会話記録 (`conversation`)
 
 - **記録情報**: 各活動について以下の情報を記録
-  - 一意のID
+
+  - 一意の ID
   - タイムスタンプ
   - 活動タイプ
   - ログレベル (debug, info, warn, error)
@@ -25,11 +27,11 @@ Rooの活動を自動的に記録するMCPサーバー
   - 詳細情報（任意の構造データ）
   - 活動の意図・目的
   - 活動の文脈情報
-  - 親アクティビティのID（階層関係用）
+  - 親アクティビティの ID（階層関係用）
   - シーケンス番号（関連アクティビティの順序）
-  - 関連アクティビティのID配列（グループ化用）
+  - 関連アクティビティの ID 配列（グループ化用）
 
-- **保存**: 日付ベースのJSONファイルに保存
+- **保存**: 日付ベースの JSON ファイルに保存
 
 - **検索**: タイプ、レベル、日付、テキストなどで検索可能
 
@@ -51,23 +53,22 @@ npm run build
 
 ## 使用方法
 
-### MCPサーバーとして実行
-
+### MCP サーバーとして実行
 ```bash
-node dist/index.js
-```
-
-### ログディレクトリの指定
-
-コマンドライン引数でログディレクトリを指定できます：
-
-```bash
-node dist/index.js --logs-dir /path/to/logs
+# ログディレクトリの指定は必須かつ絶対パスのみ
+node dist/index.js --logs-dir /absolute/path/to/logs
 # または
-node dist/index.js -d /path/to/logs
+node dist/index.js -d /absolute/path/to/logs
 ```
 
-## MCPツールの使用方法
+### 注意事項
+
+- **ログディレクトリは絶対パスで指定する必要があります**
+- 相対パスは使用できません
+- 指定したディレクトリが存在しない場合は自動的に作成されます
+```
+
+## MCP ツールの使用方法
 
 ### log_activity - 活動の記録
 
@@ -87,18 +88,18 @@ node dist/index.js -d /path/to/logs
 
 #### パラメータ一覧
 
-| パラメータ名 | 必須 | 型 | 説明 |
-|------------|------|-----|-----|
-| `type` | ✅ | string | 活動の種類（`command_execution`, `code_generation`, `file_operation`, `error_encountered`, `decision_made`, `conversation`） |
-| `summary` | ✅ | string | 活動の要約 |
-| `intention` | ✅ | string | 活動を行う意図・目的を説明するテキスト |
-| `context` | ✅ | string | 活動の文脈情報を説明するテキスト |
-| `level` | ❌ | string | ログレベル（`debug`, `info`, `warn`, `error`）。デフォルト: `info` |
-| `details` | ❌ | object | 活動の詳細情報（任意のJSON構造） |
-| `logsDir` | ❌ | string | 保存先カスタムディレクトリ |
-| `parentId` | ❌ | string | 親アクティビティID |
-| `sequence` | ❌ | number | シーケンス番号 |
-| `relatedIds` | ❌ | string[] | 関連アクティビティID配列 |
+| パラメータ名 | 必須 | 型       | 説明                                                                                                                         |
+| ------------ | ---- | -------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| `type`       | ✅   | string   | 活動の種類（`command_execution`, `code_generation`, `file_operation`, `error_encountered`, `decision_made`, `conversation`） |
+| `summary`    | ✅   | string   | 活動の要約                                                                                                                   |
+| `intention`  | ✅   | string   | 活動を行う意図・目的を説明するテキスト                                                                                       |
+| `context`    | ✅   | string   | 活動の文脈情報を説明するテキスト                                                                                             |
+| `level`      | ❌   | string   | ログレベル（`debug`, `info`, `warn`, `error`）。デフォルト: `info`                                                           |
+| `details`    | ❌   | object   | 活動の詳細情報（任意の JSON 構造）                                                                                           |
+| `logsDir`    | ❌   | string   | 保存先カスタムディレクトリ（**絶対パスのみ**）                                                                              |
+| `parentId`   | ❌   | string   | 親アクティビティ ID                                                                                                          |
+| `sequence`   | ❌   | number   | シーケンス番号                                                                                                               |
+| `relatedIds` | ❌   | string[] | 関連アクティビティ ID 配列                                                                                                   |
 
 #### 詳細な使用例
 
@@ -115,7 +116,7 @@ node dist/index.js -d /path/to/logs
     "operation": "update",
     "changedLines": 15
   },
-  "logsDir": "logs/activity",
+  "logsDir": "/absolute/path/to/logs/activity",
   "sequence": 3,
   "relatedIds": ["11223344-5566-7788-99aa-bbccddeeff00"]
 }
@@ -128,71 +129,87 @@ node dist/index.js -d /path/to/logs
 #### 基本的な使用例
 
 ```javascript
-// パラメータなしで呼び出し（デフォルト値が使用される）
-{}
+// 必須パラメータを指定（絶対パスのログディレクトリ）
+{
+  "logsDir": "/absolute/path/to/logs"
+}
 ```
 
 #### パラメータ一覧
 
-| パラメータ名 | 必須 | 型 | 説明 |
-|------------|------|-----|-----|
-| `limit` | ❌ | number | 取得する最大ファイル数。デフォルト: `10` |
-| `offset` | ❌ | number | スキップするファイル数。デフォルト: `0` |
+| パラメータ名        | 必須 | 型     | 説明                                                |
+| ------------------- | ---- | ------ | --------------------------------------------------- |
+| `logsDir`           | ✅   | string | ログファイルを検索するディレクトリパス（絶対パスのみ） |
+| `limit`             | ❌   | number | 取得する最大ファイル数。デフォルト: `10`            |
+| `offset`            | ❌   | number | スキップするファイル数。デフォルト: `0`             |
+| `logFilePrefix`     | ❌   | string | ログファイル名のプレフィックス                      |
+| `logFileExtension`  | ❌   | string | ログファイルの拡張子                                |
 
 #### 詳細な使用例
 
 ```javascript
 // カスタムパラメータを指定して呼び出し
 {
+  "logsDir": "/absolute/path/to/logs",
   "limit": 5,
-  "offset": 10
+  "offset": 10,
+  "logFilePrefix": "custom-log-",
+  "logFileExtension": ".jsonl"
 }
 ```
 
 ### search_logs - ログの検索
 
-保存されたログを様々な条件で検索するためのツールです。**すべてのパラメータが任意**です。パラメータを指定しない場合は、制限数（limit）内のすべてのログが返されます。
+保存されたログを様々な条件で検索するためのツールです。logsDir（絶対パス）パラメータが必須で、その他のフィルタリングパラメータは任意です。
 
 #### 基本的な使用例
 
 ```javascript
-// 空のオブジェクトで呼び出し - 最新の50件のログを取得
-{}
-
-// 活動タイプのみでフィルタリング
+// 必須パラメータのみ指定 - 指定ディレクトリの最新50件を取得
 {
+  "logsDir": "/absolute/path/to/logs"
+}
+
+// 活動タイプでのフィルタリング
+{
+  "logsDir": "/absolute/path/to/logs",
   "type": "command_execution"
 }
 ```
 
-#### パラメータ一覧（すべて任意）
+#### パラメータ一覧
 
-| パラメータ名 | 型 | 説明 |
-|------------|-----|-----|
-| `type` | string | 活動タイプでフィルタリング（`command_execution`, `code_generation`, `file_operation`, `error_encountered`, `decision_made`, `conversation`） |
-| `level` | string | ログレベルでフィルタリング（`debug`, `info`, `warn`, `error`） |
-| `startDate` | string | 検索開始日（YYYY-MM-DD形式） |
-| `endDate` | string | 検索終了日（YYYY-MM-DD形式） |
-| `searchText` | string | ログの概要または詳細に含まれるテキストで検索 |
-| `limit` | number | 取得する最大ログ数。デフォルト: `50` |
-| `offset` | number | スキップするログ数。デフォルト: `0` |
-| `parentId` | string | 特定の親アクティビティに関連するログのみを取得 |
-| `sequenceFrom` | number | シーケンス番号の下限値 |
-| `sequenceTo` | number | シーケンス番号の上限値 |
-| `relatedId` | string | 特定のIDが関連IDsに含まれるログを検索 |
-| `relatedIds` | string[] | これらのIDのいずれかが関連IDsに含まれるログを検索 |
+| パラメータ名       | 必須 | 型       | 説明                                                                                                                                         |
+| ------------------ | ---- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `logsDir`          | ✅   | string   | ログディレクトリ（絶対パスのみ）                                                                                                             |
+| `logFilePrefix`    | ❌   | string   | ログファイル名のプレフィックス                                                                                                               |
+| `logFileExtension` | ❌   | string   | ログファイルの拡張子                                                                                                                         |
+| `type`             | ❌   | string   | 活動タイプでフィルタリング（`command_execution`, `code_generation`, `file_operation`, `error_encountered`, `decision_made`, `conversation`） |
+| `level`            | ❌   | string   | ログレベルでフィルタリング（`debug`, `info`, `warn`, `error`）                                                                               |
+| `startDate`        | ❌   | string   | 検索開始日（YYYY-MM-DD 形式）                                                                                                                |
+| `endDate`          | ❌   | string   | 検索終了日（YYYY-MM-DD 形式）                                                                                                                |
+| `searchText`       | ❌   | string   | ログの概要または詳細に含まれるテキストで検索                                                                                                 |
+| `limit`            | ❌   | number   | 取得する最大ログ数。デフォルト: `50`                                                                                                         |
+| `offset`           | ❌   | number   | スキップするログ数。デフォルト: `0`                                                                                                          |
+| `parentId`         | ❌   | string   | 特定の親アクティビティに関連するログのみを取得                                                                                               |
+| `sequenceFrom`     | ❌   | number   | シーケンス番号の下限値                                                                                                                       |
+| `sequenceTo`       | ❌   | number   | シーケンス番号の上限値                                                                                                                       |
+| `relatedId`        | ❌   | string   | 特定の ID が関連 IDs に含まれるログを検索                                                                                                    |
+| `relatedIds`       | ❌   | string[] | これらの ID のいずれかが関連 IDs に含まれるログを検索                                                                                        |
 
 #### 複合条件での使用例
 
 ```javascript
 // タイプとレベルを組み合わせたフィルタリング
 {
+  "logsDir": "/absolute/path/to/logs",
   "type": "file_operation",
   "level": "info"
 }
 
 // 日付範囲とテキスト検索の組み合わせ
 {
+  "logsDir": "/absolute/path/to/logs",
   "startDate": "2025-01-01",
   "endDate": "2025-03-31",
   "searchText": "webpack"
@@ -200,6 +217,8 @@ node dist/index.js -d /path/to/logs
 
 // 高度なフィルタリング
 {
+  "logsDir": "/absolute/path/to/logs",
+  "logFilePrefix": "custom-",
   "type": "code_generation",
   "startDate": "2025-03-01",
   "endDate": "2025-03-14",
@@ -215,16 +234,19 @@ node dist/index.js -d /path/to/logs
 ```javascript
 // 親子関係による検索
 {
+  "logsDir": "/absolute/path/to/logs",
   "parentId": "00112233-4455-6677-8899-aabbccddeeff"
 }
 
 // 関連アクティビティによる検索
 {
+  "logsDir": "/absolute/path/to/logs",
   "relatedId": "11223344-5566-7788-99aa-bbccddeeff00"
 }
 
 // 複数の関連アクティビティのいずれかに関連するログの検索
 {
+  "logsDir": "/absolute/path/to/logs",
   "relatedIds": [
     "11223344-5566-7788-99aa-bbccddeeff00",
     "22334455-6677-8899-aabb-ccddeeff1122"
@@ -232,20 +254,18 @@ node dist/index.js -d /path/to/logs
 }
 ```
 
-## Clineとの連携
+## Cline との連携
 
-Clineの設定ファイル（`cline_mcp_settings.json`）に以下を追加します：
+Cline の設定ファイル（`cline_mcp_settings.json`）に以下を追加します：
 
 ```json
 {
   "mcpServers": {
     "roo-activity-logger": {
       "command": "node",
-      "args": [
-        "/path/to/roo-logger/dist/index.js"
-      ],
+      "args": ["/path/to/roo-logger/dist/index.js", "--logs-dir", "/absolute/path/to/logs"],
       "env": {},
-      "disabled": false,
+      "disabled": false
     }
   }
 }

@@ -79,17 +79,32 @@ export type LogActivityArgs = Readonly<{
 }>;
 
 /**
+ * 共通設定パラメータ
+ */
+export type ToolConfigParams = Readonly<{
+  logsDir: string;
+  logFilePrefix?: string;
+  logFileExtension?: string;
+}>;
+
+/**
  * 保存されたログファイルのリスト取得引数
  */
 export type GetLogFilesArgs = Readonly<{
+  logsDir: string;
   limit?: number;
   offset?: number;
+  logFilePrefix?: string;
+  logFileExtension?: string;
 }>;
 
 /**
  * ログの検索引数
  */
 export type SearchLogsArgs = Readonly<{
+  logsDir: string;
+  logFilePrefix?: string;
+  logFileExtension?: string;
   type?: ActivityType;
   level?: LogLevel;
   startDate?: string;
