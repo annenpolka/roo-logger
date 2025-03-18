@@ -73,29 +73,7 @@ describe('検索対象フィールド限定機能テスト', () => {
     });
   });
 
-  describe('検索モードとの組み合わせ', () => {
-    it('Globパターンと特定フィールドの組み合わせで検索できること', () => {
-      const results = simulateSearch(mockLogs, {
-        searchText: 'デプロイ*',
-        searchFields: [SearchFields.INTENTION],
-        searchMode: SearchModes.GLOB
-      });
-
-      // intentionフィールドに'デプロイ'で始まるテキストを含むログは1つあるはず
-      expect(results).toHaveLength(1);
-    });
-
-    it('正規表現と特定フィールドの組み合わせで検索できること', () => {
-      const results = simulateSearch(mockLogs, {
-        searchText: 'ユーザー[^\\s]+',
-        searchFields: [SearchFields.CONTEXT],
-        searchMode: SearchModes.REGEXP
-      });
-
-      // contextフィールドに'ユーザー'の後に空白以外の文字が続くテキストを含むログは1つあるはず
-      expect(results).toHaveLength(1);
-    });
-  });
+  // 検索モード機能は簡略化のため削除
 
   describe('searchFieldsが指定されていない場合', () => {
     it('searchFieldsが指定されていない場合はデフォルトですべてのフィールドが検索対象になること', () => {

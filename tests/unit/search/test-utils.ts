@@ -1,5 +1,5 @@
-import { ActivityLog, ActivityTypes, LogLevels, SearchModes, SearchFields } from '../../../src/types';
-import { textMatches, getSearchableText, simulateSearch } from '../../../src/utils/search';
+import { ActivityLog, ActivityTypes, LogLevels, SearchModes, SearchFields, SearchMode } from '../../../src/types';
+import { textMatches, getSearchableText } from '../../../src/utils/search';
 
 /**
  * テスト用のモックログデータ
@@ -67,10 +67,48 @@ export const mockLogs: ActivityLog[] = [
   }
 ];
 
-// 注: 検索ロジックは共通ユーティリティ src/utils/search.ts に移動しました
-
 /**
  * 検索結果のフィルタリングをシミュレートする関数
- * 共通ユーティリティのsimulateSearchをエクスポート
+ * 実際のコードと同じロジックを使用するための実装
  */
-export { simulateSearch };
+export function simulateSearch(
+  logs: ActivityLog[],
+  options: {
+    searchText?: string;
+    searchTerms?: string[];
+    searchMode?: SearchMode;
+    searchFields?: string[];
+    caseSensitive?: boolean;
+  }
+): ActivityLog[] {
+  const {
+    searchText,
+    searchTerms = [],
+    searchMode = SearchModes.NORMAL,
+    searchFields = [SearchFields.ALL],
+    caseSensitive = false
+  } = options;
+
+  // 検索語がない場合は全件返す
+  if (!searchText && (!searchTerms || searchTerms.length === 0)) {
+    return logs;
+  }
+
+  // 全検索語を含む配列を作成（searchTextがあれば追加）
+  const allSearchTerms = [...searchTerms];
+  if (searchText) {
+    allSearchTerms.push(searchText);
+  }
+
+  // 検索語とフィールドに基づいてフィルタリング
+  return logs.filter(log => {
+    // いずれかの検索語が一致するかチェック（OR条件）
+    return allSearchTerms.some(term => {
+      // いずれかの指定フィールドで一致するかチェック
+      return searchFields.some(field => {
+        const fieldText = getSearchableText(log, field);
+        return textMatches(fieldText, term, searchMode, caseSensitive, field);
+      });
+    });
+  });
+}

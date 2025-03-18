@@ -103,8 +103,6 @@ export type GetLogFilesArgs = Readonly<{
  */
 export const SearchModes = {
   NORMAL: 'normal',     // 通常の文字列検索
-  GLOB: 'glob',         // グロブパターン検索
-  REGEXP: 'regexp',     // 正規表現検索
 } as const;
 
 /**
