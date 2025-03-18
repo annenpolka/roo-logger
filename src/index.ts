@@ -205,7 +205,7 @@ class RooActivityLogger {
               },
               logsDir: {
                 type: 'string',
-                description: 'このアクティビティのログを保存するディレクトリのパス（絶対パスのみ。例: "/path/to/logs/activity"、"/path/to/logs/error"など。指定しない場合はデフォルトのログディレクトリが使用されます）',
+                description: 'このアクティビティのログを保存するディレクトリのパス（必須・絶対パスのみ。例: "/path/to/logs/activity"、"/path/to/logs/error"など）',
               },
               parentId: {
                 type: 'string',
@@ -223,7 +223,7 @@ class RooActivityLogger {
                 description: '関連するアクティビティのID配列（グループ化用。例: 直接の親子関係はないが関連性のある複数のアクティビティをリンクさせる場合に、それらのIDをリストとして指定）',
               }
             },
-            required: ['type', 'summary', 'intention', 'context'],
+            required: ['type', 'summary', 'intention', 'context', 'logsDir'],
             additionalProperties: false,
           },
         },
@@ -359,6 +359,19 @@ class RooActivityLogger {
    * アクティビティログの作成ハンドラ
    */
   private async handleLogActivity(args: LogActivityArgs) {
+    // logsDir が絶対パスであることを確認（必須パラメータ）
+    if (!path.isAbsolute(args.logsDir)) {
+      return {
+        content: [
+          {
+            type: 'text',
+            text: `エラー: ログディレクトリは絶対パスで指定する必要があります: ${args.logsDir}`,
+          },
+        ],
+        isError: true,
+      };
+    }
+
     const log: ActivityLog = {
       id: uuidv4(),
       timestamp: new Date().toISOString(),
@@ -373,7 +386,7 @@ class RooActivityLogger {
       relatedIds: args.relatedIds,
     };
 
-    // ログディレクトリが指定されている場合は一時的にそのディレクトリを使用
+    // ログディレクトリを使用して保存（必須パラメータ）
     const result = await this.saveLog(log, args.logsDir);
 
     if (result.success) {

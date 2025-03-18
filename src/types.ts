@@ -65,7 +65,7 @@ export type LogActivityArgs = Readonly<{
   summary: string;
   level?: LogLevel;
   details?: Readonly<Record<string, unknown>>;
-  logsDir?: string; // ログの保存先ディレクトリ（オプション）
+  logsDir: string; // ログの保存先ディレクトリ（必須）
   /** 活動を行う意図・目的を説明するテキスト */
   intention: string;
   /** 活動の文脈情報を説明するテキスト */

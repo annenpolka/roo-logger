@@ -79,7 +79,8 @@ node dist/index.js
   "type": "command_execution",
   "summary": "npmコマンドを実行",
   "intention": "プロジェクトの依存関係を更新するため",
-  "context": "新機能実装のための準備作業として"
+  "context": "新機能実装のための準備作業として",
+  "logsDir": "/absolute/path/to/logs/activity"
 }
 ```
 
@@ -91,9 +92,9 @@ node dist/index.js
 | `summary`    | ✅   | string   | 活動の要約                                                                                                                   |
 | `intention`  | ✅   | string   | 活動を行う意図・目的を説明するテキスト                                                                                       |
 | `context`    | ✅   | string   | 活動の文脈情報を説明するテキスト                                                                                             |
+| `logsDir`    | ✅   | string   | 保存先ディレクトリ（**必須・絶対パスのみ**）                                                                                |
 | `level`      | ❌   | string   | ログレベル（`debug`, `info`, `warn`, `error`）。デフォルト: `info`                                                           |
 | `details`    | ❌   | object   | 活動の詳細情報（任意の JSON 構造）                                                                                           |
-| `logsDir`    | ❌   | string   | 保存先カスタムディレクトリ（**絶対パスのみ**）                                                                              |
 | `parentId`   | ❌   | string   | 親アクティビティ ID                                                                                                          |
 | `sequence`   | ❌   | number   | シーケンス番号                                                                                                               |
 | `relatedIds` | ❌   | string[] | 関連アクティビティ ID 配列                                                                                                   |
