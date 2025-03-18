@@ -99,6 +99,36 @@ export type GetLogFilesArgs = Readonly<{
 }>;
 
 /**
+ * 検索モード定義
+ */
+export const SearchModes = {
+  NORMAL: 'normal',     // 通常の文字列検索
+  GLOB: 'glob',         // グロブパターン検索
+  REGEXP: 'regexp',     // 正規表現検索
+} as const;
+
+/**
+ * 検索モードのユニオン型
+ */
+export type SearchMode = typeof SearchModes[keyof typeof SearchModes];
+
+/**
+ * 検索対象フィールド定義
+ */
+export const SearchFields = {
+  SUMMARY: 'summary',
+  DETAILS: 'details',
+  INTENTION: 'intention',
+  CONTEXT: 'context',
+  ALL: 'all',          // すべてのフィールドを検索
+} as const;
+
+/**
+ * 検索対象フィールドのユニオン型
+ */
+export type SearchField = typeof SearchFields[keyof typeof SearchFields];
+
+/**
  * ログの検索引数
  */
 export type SearchLogsArgs = Readonly<{
@@ -109,7 +139,16 @@ export type SearchLogsArgs = Readonly<{
   level?: LogLevel;
   startDate?: string;
   endDate?: string;
+  /** 単一の検索テキスト（互換性のために維持） */
   searchText?: string;
+  /** 複数の検索テキスト（OR検索） */
+  searchTerms?: readonly string[];
+  /** 検索モード（通常/glob/正規表現） */
+  searchMode?: SearchMode;
+  /** 検索対象フィールド */
+  searchFields?: readonly SearchField[];
+  /** 検索時に大文字小文字を区別するか */
+  caseSensitive?: boolean;
   limit?: number;
   offset?: number;
   /** 親アクティビティIDでフィルタリング */

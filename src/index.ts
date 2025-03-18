@@ -7,6 +7,7 @@ import {
   ListToolsRequestSchema,
   McpError,
 } from '@modelcontextprotocol/sdk/types.js';
+import { minimatch } from 'minimatch';
 import { format } from 'date-fns';
 import { promises as fs } from 'fs';
 import path from 'path';
@@ -20,8 +21,12 @@ import {
   LogLevels,
   LogResult,
   SearchLogsArgs,
-  ToolConfigParams
+  SearchModes,
+  SearchFields,
+  SearchMode,
+  SearchField
 } from './types.js';
+import { textMatches, getSearchableText } from './utils/search.js';
 
 // ディレクトリ関連の設定
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -474,6 +479,8 @@ class RooActivityLogger {
     }
   }
 
+  // 注: 検索ロジックは共通ユーティリティ src/utils/search.ts に移動しました
+
   /**
    * ログ検索ハンドラ
    */
@@ -577,12 +584,32 @@ class RooActivityLogger {
         filteredLogs = filteredLogs.filter(log => log.level === args.level);
       }
 
+      // 検索モードと大文字小文字の区別オプションの設定
+      const searchMode = args.searchMode || SearchModes.NORMAL;
+      const caseSensitive = args.caseSensitive ?? false;
+      const searchFields = args.searchFields ? [...args.searchFields] : [SearchFields.ALL];
+
+      // 検索語の処理（searchTextとsearchTermsの両方を考慮）
+      const allSearchTerms: string[] = [];
       if (args.searchText) {
-        const searchTextLower = args.searchText.toLowerCase();
-        filteredLogs = filteredLogs.filter(log =>
-          log.summary.toLowerCase().includes(searchTextLower) ||
-          JSON.stringify(log.details).toLowerCase().includes(searchTextLower)
-        );
+        allSearchTerms.push(args.searchText);
+      }
+      if (args.searchTerms && args.searchTerms.length > 0) {
+        allSearchTerms.push(...args.searchTerms);
+      }
+
+      // 検索語がある場合のみフィルタリングを実行
+      if (allSearchTerms.length > 0) {
+        filteredLogs = filteredLogs.filter(log => {
+          // いずれかの検索語に一致するか（OR検索）
+          return allSearchTerms.some(term => {
+            // いずれかの指定フィールドで一致するか
+            return searchFields.some(field => {
+              const fieldText = getSearchableText(log, field);
+              return textMatches(fieldText, term, searchMode, caseSensitive, field);
+            });
+          });
+        });
       }
 
       // 親子関係による検索
