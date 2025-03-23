@@ -359,7 +359,20 @@ class RooActivityLogger {
    * アクティビティログの作成ハンドラ
    */
   private async handleLogActivity(args: LogActivityArgs) {
-    // logsDir が絶対パスであることを確認（必須パラメータ）
+    // logsDir が存在するか確認（必須パラメータ）
+    if (!args.logsDir) {
+      return {
+        content: [
+          {
+            type: 'text',
+            text: `エラー: ログディレクトリ(logsDir)は必須パラメータです`,
+          },
+        ],
+        isError: true,
+      };
+    }
+
+    // logsDir が絶対パスであることを確認
     if (!path.isAbsolute(args.logsDir)) {
       return {
         content: [
@@ -416,6 +429,19 @@ class RooActivityLogger {
    */
   private async handleGetLogFiles(args: GetLogFilesArgs) {
     try {
+      // logsDir が存在するか確認（必須パラメータ）
+      if (!args.logsDir) {
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `エラー: ログディレクトリ(logsDir)は必須パラメータです`,
+            },
+          ],
+          isError: true,
+        };
+      }
+
       // 設定パラメータの検証と適用
       if (!path.isAbsolute(args.logsDir)) {
         return {
@@ -499,6 +525,19 @@ class RooActivityLogger {
    */
   private async handleSearchLogs(args: SearchLogsArgs) {
     try {
+      // logsDir が存在するか確認（必須パラメータ）
+      if (!args.logsDir) {
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `エラー: ログディレクトリ(logsDir)は必須パラメータです`,
+            },
+          ],
+          isError: true,
+        };
+      }
+
       // 設定パラメータの検証と適用
       if (!path.isAbsolute(args.logsDir)) {
         return {
