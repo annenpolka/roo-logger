@@ -1,5 +1,11 @@
 # Roo Activity Logger
 
+## TL;DR
+
+* **これは何？**: Roo の活動（コマンド実行、コード生成など）を記録するための **MCP サーバー** です。
+* **何ができる？**: 活動履歴を JSON 形式で保存し、後から検索・分析できます。
+* **どう使う？**: Cline/Roo-Code の設定に追加して、Roo の活動を自動記録させます。
+
 Roo の活動を自動的に記録する MCP サーバー
 
 ## 概要
@@ -8,40 +14,73 @@ Roo の活動を自動的に記録する MCP サーバー
 
 ## 機能
 
-- **活動記録**: 様々な種類の活動を記録
+* **活動記録**: 様々な種類の活動を記録
 
-  - コマンド実行 (`command_execution`)
-  - コード生成 (`code_generation`)
-  - ファイル操作 (`file_operation`)
-  - エラー発生 (`error_encountered`)
-  - 判断記録 (`decision_made`)
-  - 会話記録 (`conversation`)
+  * コマンド実行 (`command_execution`)
+  * コード生成 (`code_generation`)
+  * ファイル操作 (`file_operation`)
+  * エラー発生 (`error_encountered`)
+  * 判断記録 (`decision_made`)
+  * 会話記録 (`conversation`)
 
-- **記録情報**: 各活動について以下の情報を記録
+* **記録情報**: 各活動について以下の情報を記録
 
-  - 一意の ID
-  - タイムスタンプ
-  - 活動タイプ
-  - ログレベル (debug, info, warn, error)
-  - 概要
-  - 詳細情報（任意の構造データ）
-  - 活動の意図・目的
-  - 活動の文脈情報
-  - 親アクティビティの ID（階層関係用）
-  - シーケンス番号（関連アクティビティの順序）
-  - 関連アクティビティの ID 配列（グループ化用）
+  * 一意の ID
+  * タイムスタンプ
+  * 活動タイプ
+  * ログレベル (debug, info, warn, error)
+  * 概要
+  * 詳細情報（任意の構造データ）
+  * 活動の意図・目的
+  * 活動の文脈情報
+  * 親アクティビティの ID（階層関係用）
+  * シーケンス番号（関連アクティビティの順序）
+  * 関連アクティビティの ID 配列（グループ化用）
 
-- **保存**: 日付ベースの JSON ファイルに保存
+* **保存**: 日付ベースの JSON ファイルに保存
 
-- **検索**: タイプ、レベル、日付、テキストなどで検索可能
+* **検索**: タイプ、レベル、日付、テキストなどで検索可能
 
-- **カスタムディレクトリ**: 活動ごとに保存先を指定可能
+* **カスタムディレクトリ**: 活動ごとに保存先を指定可能
 
-## インストール
+## 使用方法 (推奨: npx を使用)
+
+`npx` を使うことで、リポジトリをクローンせずに直接 MCP サーバーを実行できます。
+
+Cline (もしくはRoo-Code) の設定ファイル（`cline_mcp_settings.json`）に以下を追加します：
+
+```json
+{
+  "mcpServers": {
+    "roo-activity-logger": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "github:annenpolka/roo-logger"
+      ],
+      "env": {},
+      "disabled": false,
+      "alwaysAllow": [
+        "get_log_files",
+        "search_logs",
+        "set_logs_directory",
+        "log_activity"
+      ],
+      "timeout": 300
+    }
+  }
+}
+```
+
+---
+
+## 開発者向け: ローカルでのセットアップ
+
+リポジトリをローカルにクローンして開発やカスタマイズを行う場合は、以下の手順を実行します。
 
 ```bash
-# リポジトリのクローン
-git clone https://github.com/yourusername/roo-logger.git
+# リポジトリのクローン (yourusername を実際のユーザー名/組織名に置き換えてください)
+git clone https://github.com/annenpolka/roo-logger.git
 cd roo-logger
 
 # 依存パッケージのインストール
@@ -51,16 +90,14 @@ npm install
 npm run build
 ```
 
-## 使用方法
-
-Cline (もしくはRoo-Code) の設定ファイル（`cline_mcp_settings.json`）に以下を追加します：
+ローカルでビルドしたサーバーを使用する場合の設定例:
 
 ```json
 {
   "mcpServers": {
     "roo-activity-logger": {
       "command": "node",
-      "args": ["/path/to/roo-logger/dist/index.js"],
+      "args": ["/path/to/your/local/roo-logger/dist/index.js"], // クローンしたパスに合わせて変更
       "env": {},
       "disabled": false
     }
@@ -68,10 +105,35 @@ Cline (もしくはRoo-Code) の設定ファイル（`cline_mcp_settings.json`�
 }
 ```
 
+Cline (もしくはRoo-Code) の設定ファイル（`cline_mcp_settings.json`）に以下を追加します：
+
+```json
+{
+  "mcpServers": {
+    "roo-activity-logger": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "github:annenpolka/roo-logger"
+      ],
+      "env": {},
+      "disabled": false,
+      "alwaysAllow": [
+        "get_log_files",
+        "search_logs",
+        "set_logs_directory",
+        "log_activity"
+      ],
+      "timeout": 300
+    }
+  }
+}
+```
+
 ### 注意事項
 
-- デフォルトでは、プロジェクトルートディレクトリの 'logs' フォルダにログが保存されます
-- 指定したディレクトリが存在しない場合は自動的に作成されます
+* デフォルトでは、プロジェクトルートディレクトリの 'logs' フォルダにログが保存されます
+* 指定したディレクトリが存在しない場合は自動的に作成されます
 
 ```
 
