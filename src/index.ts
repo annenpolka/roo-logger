@@ -784,11 +784,11 @@ class RooActivityLogger {
       return {
         content: [
           {
-            type: 'json',
-            json: {
+            type: 'text',
+            text: JSON.stringify({
               total: filteredLogs.length,
               logs: paginatedLogs,
-            },
+            }, null, 2),
           },
         ],
       };
