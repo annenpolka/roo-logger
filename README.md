@@ -53,16 +53,26 @@ npm run build
 
 ## 使用方法
 
-### MCP サーバーとして実行
-```bash
-# シンプルに実行するだけで使用できます
-node dist/index.js
+Cline (もしくはRoo-Code) の設定ファイル（`cline_mcp_settings.json`）に以下を追加します：
+
+```json
+{
+  "mcpServers": {
+    "roo-activity-logger": {
+      "command": "node",
+      "args": ["/path/to/roo-logger/dist/index.js"],
+      "env": {},
+      "disabled": false
+    }
+  }
+}
 ```
 
 ### 注意事項
 
 - デフォルトでは、プロジェクトルートディレクトリの 'logs' フォルダにログが保存されます
 - 指定したディレクトリが存在しない場合は自動的に作成されます
+
 ```
 
 ## MCP ツールの使用方法
@@ -251,23 +261,6 @@ node dist/index.js
     "11223344-5566-7788-99aa-bbccddeeff00",
     "22334455-6677-8899-aabb-ccddeeff1122"
   ]
-}
-```
-
-## Cline との連携
-
-Cline の設定ファイル（`cline_mcp_settings.json`）に以下を追加します：
-
-```json
-{
-  "mcpServers": {
-    "roo-activity-logger": {
-      "command": "node",
-      "args": ["/path/to/roo-logger/dist/index.js"],
-      "env": {},
-      "disabled": false
-    }
-  }
 }
 ```
 
