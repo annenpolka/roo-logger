@@ -16,7 +16,8 @@
     "dev": "ts-node-esm src/index.ts",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "prepare": "npm run build"
   },
   "dependencies": {
     "winston": "^3.10.0"
