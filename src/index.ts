@@ -256,6 +256,11 @@ class RooActivityLogger {
                 type: 'string',
                 description: 'ログファイルの拡張子（デフォルト: ".json"）',
               },
+              maxDepth: {
+                type: 'number',
+                description: '探索するディレクトリの最大深度（0は指定ディレクトリのみ。デフォルト: 3）',
+                default: 3,
+              },
             },
             required: ['logsDir'],
             additionalProperties: false,
@@ -425,6 +430,50 @@ class RooActivityLogger {
   }
 
   /**
+   * 指定されたディレクトリからログファイルを再帰的に検索
+   * @param dir 検索を開始するディレクトリ
+   * @param prefix ファイル名のプレフィックス
+   * @param extension ファイル名の拡張子
+   * @param maxDepth 探索する最大深度 (0は指定ディレクトリのみ)
+   * @param currentDepth 現在の深度 (内部利用)
+   * @returns 見つかったファイルのフルパスの配列
+   */
+  private async findFilesRecursively(
+    dir: string,
+    prefix: string,
+    extension: string,
+    maxDepth: number,
+    currentDepth = 0
+  ): Promise<string[]> {
+    let files: string[] = [];
+    try {
+      const dirents = await fs.readdir(dir, { withFileTypes: true });
+      for (const dirent of dirents) {
+        const fullPath = path.join(dir, dirent.name);
+        if (dirent.isDirectory() && currentDepth < maxDepth) {
+          // サブディレクトリを再帰的に探索
+          files = files.concat(
+            await this.findFilesRecursively(
+              fullPath,
+              prefix,
+              extension,
+              maxDepth,
+              currentDepth + 1
+            )
+          );
+        } else if (dirent.isFile() && dirent.name.startsWith(prefix) && dirent.name.endsWith(extension)) {
+          // 条件に一致するファイルを追加
+          files.push(fullPath);
+        }
+      }
+    } catch (error) {
+      // ディレクトリが存在しない、アクセス権がないなどのエラーは無視して空配列を返す
+      console.error(`Error reading directory ${dir}:`, error);
+    }
+    return files;
+  }
+
+  /**
    * ログファイル一覧取得ハンドラ
    */
   private async handleGetLogFiles(args: GetLogFilesArgs) {
@@ -486,21 +535,32 @@ class RooActivityLogger {
 
       const limit = args.limit ?? 10;
       const offset = args.offset ?? 0;
+      const maxDepth = args.maxDepth ?? 3; // デフォルトの深さを3に設定
 
-      const files = await fs.readdir(tempConfig.logsDir);
-      const logFiles = files
-        .filter((file: string) =>
-          file.startsWith(tempConfig.logFilePrefix) &&
-          file.endsWith(tempConfig.logFileExtension))
-        .sort()
-        .reverse()
-        .slice(offset, offset + limit);
+      // 再帰的にファイルを取得
+      const allLogFiles = await this.findFilesRecursively(
+        tempConfig.logsDir,
+        tempConfig.logFilePrefix,
+        tempConfig.logFileExtension,
+        maxDepth
+      );
 
+      // ソート、オフセット、リミットを適用
+      const logFiles = allLogFiles
+        .sort() // ファイル名でソート (日付順にするため)
+        .reverse() // 新しい順にする
+        .slice(offset, offset + limit); // ページネーション
+
+      // 結果をテキスト形式で返すように修正
+      const resultJson = {
+        total: allLogFiles.length,
+        files: logFiles,
+      };
       return {
         content: [
           {
-            type: 'text',
-            text: JSON.stringify(logFiles, null, 2),
+            type: 'text', // type を 'text' に変更
+            text: JSON.stringify(resultJson, null, 2), // JSONを文字列化して text に含める
           },
         ],
       };
@@ -510,15 +570,13 @@ class RooActivityLogger {
         content: [
           {
             type: 'text',
-            text: `エラー: ログファイル一覧の取得に失敗しました: ${errorMessage}`,
+            text: `エラー: ログファイルの取得に失敗しました: ${errorMessage}`,
           },
         ],
         isError: true,
       };
     }
   }
-
-  // 注: 検索ロジックは共通ユーティリティ src/utils/search.ts に移動しました
 
   /**
    * ログ検索ハンドラ
@@ -580,69 +638,90 @@ class RooActivityLogger {
         };
       }
 
-      // ファイル名パターンの作成
-      let targetFiles: string[] = [];
+      // ログファイルの取得（ここでは再帰しない。get_log_filesで取得したファイルリストを元に検索する想定）
+      const files = await fs.readdir(tempConfig.logsDir);
+      const logFiles = files
+        .filter((file: string) =>
+          file.startsWith(tempConfig.logFilePrefix) &&
+          file.endsWith(tempConfig.logFileExtension))
+        .sort()
+        .reverse(); // 新しいファイルから検索
 
+      // 日付範囲フィルタリング
+      let filesToSearch = logFiles;
       if (args.startDate && args.endDate) {
-        // 日付範囲でファイルをフィルタリング
         const start = new Date(args.startDate);
         const end = new Date(args.endDate);
+        end.setDate(end.getDate() + 1); // 終了日を含むように調整
 
-        const files = await fs.readdir(tempConfig.logsDir);
-        targetFiles = files.filter((file: string) => {
-          const prefix = tempConfig.logFilePrefix;
-          const extension = tempConfig.logFileExtension;
-
-          if (!file.startsWith(prefix) || !file.endsWith(extension)) return false;
-
-          const dateStr = file.replace(prefix, '').replace(extension, '');
-          const fileDate = new Date(dateStr);
-
-          return fileDate >= start && fileDate <= end;
+        filesToSearch = filesToSearch.filter(file => {
+          const datePart = file.substring(tempConfig.logFilePrefix.length, file.length - tempConfig.logFileExtension.length);
+          try {
+            const fileDate = new Date(datePart);
+            return fileDate >= start && fileDate < end;
+          } catch {
+            return false; // 不正なファイル名は無視
+          }
         });
-      } else {
-        // すべてのファイルを対象にする
-        const files = await fs.readdir(tempConfig.logsDir);
-        targetFiles = files.filter((file: string) => {
-          const prefix = tempConfig.logFilePrefix;
-          const extension = tempConfig.logFileExtension;
-          return file.startsWith(prefix) && file.endsWith(extension);
+      } else if (args.startDate) {
+        const start = new Date(args.startDate);
+        filesToSearch = filesToSearch.filter(file => {
+          const datePart = file.substring(tempConfig.logFilePrefix.length, file.length - tempConfig.logFileExtension.length);
+          try {
+            const fileDate = new Date(datePart);
+            return fileDate >= start;
+          } catch {
+            return false;
+          }
+        });
+      } else if (args.endDate) {
+        const end = new Date(args.endDate);
+        end.setDate(end.getDate() + 1);
+        filesToSearch = filesToSearch.filter(file => {
+          const datePart = file.substring(tempConfig.logFilePrefix.length, file.length - tempConfig.logFileExtension.length);
+          try {
+            const fileDate = new Date(datePart);
+            return fileDate < end;
+          } catch {
+            return false;
+          }
         });
       }
 
-      // ログの検索
+      // 全ログエントリを読み込み
       let allLogs: ActivityLog[] = [];
-
-      for (const file of targetFiles) {
+      for (const file of filesToSearch) {
         const filePath = path.join(tempConfig.logsDir, file);
         try {
-          const content = await fs.readFile(filePath, 'utf-8');
-          const logs: ActivityLog[] = JSON.parse(content);
-          allLogs = [...allLogs, ...logs];
-        } catch {
-          // ファイル読み込みエラーは無視して次へ
-          continue;
+          const fileContent = await fs.readFile(filePath, 'utf-8');
+          const logsFromFile: ActivityLog[] = JSON.parse(fileContent);
+          allLogs = allLogs.concat(logsFromFile);
+        } catch (readError) {
+          console.error(`Error reading or parsing log file ${filePath}:`, readError);
+          // エラーが発生したファイルはスキップ
         }
       }
 
       // フィルタリング
       let filteredLogs = allLogs;
 
+      // タイプでフィルタ
       if (args.type) {
         filteredLogs = filteredLogs.filter(log => log.type === args.type);
       }
 
+      // レベルでフィルタ
       if (args.level) {
         filteredLogs = filteredLogs.filter(log => log.level === args.level);
       }
 
-      // 検索モードと大文字小文字の区別オプションの設定
+      // テキスト検索
+      const allSearchTerms: string[] = [];
       const searchMode = args.searchMode || SearchModes.NORMAL;
       const caseSensitive = args.caseSensitive ?? false;
       const searchFields = args.searchFields ? [...args.searchFields] : [SearchFields.ALL];
 
-      // 検索語の処理（searchTextとsearchTermsの両方を考慮）
-      const allSearchTerms: string[] = [];
+      // searchText と searchTerms を結合
       if (args.searchText) {
         allSearchTerms.push(args.searchText);
       }
@@ -650,68 +729,66 @@ class RooActivityLogger {
         allSearchTerms.push(...args.searchTerms);
       }
 
-      // 検索語がある場合のみフィルタリングを実行
       if (allSearchTerms.length > 0) {
         filteredLogs = filteredLogs.filter(log => {
-          // いずれかの検索語に一致するか（OR検索）
-          return allSearchTerms.some(term => {
-            // いずれかの指定フィールドで一致するか
-            return searchFields.some(field => {
-              const fieldText = getSearchableText(log, field);
-              return textMatches(fieldText, term, searchMode, caseSensitive, field);
-            });
-          });
+          // 指定された各フィールドから検索対象テキストを取得
+          const textsToSearch = searchFields.map(field => getSearchableText(log, field));
+          const combinedText = textsToSearch.join(' '); // フィールド間のテキストを結合
+
+          // いずれかの検索語にマッチするかどうかを判定
+          return allSearchTerms.some(term =>
+            textMatches(combinedText, term, searchMode, caseSensitive)
+          );
         });
       }
 
-      // 親子関係による検索
+
+      // 親IDでフィルタ
       if (args.parentId) {
         filteredLogs = filteredLogs.filter(log => log.parentId === args.parentId);
       }
 
-      // シーケンス範囲による検索
+      // シーケンス範囲でフィルタ
       if (args.sequenceFrom !== undefined) {
         filteredLogs = filteredLogs.filter(log =>
           log.sequence !== undefined && log.sequence >= args.sequenceFrom!
         );
       }
-
       if (args.sequenceTo !== undefined) {
         filteredLogs = filteredLogs.filter(log =>
           log.sequence !== undefined && log.sequence <= args.sequenceTo!
         );
       }
 
-      // 関連アクティビティIDによる検索
+      // 関連IDでフィルタ
       if (args.relatedId) {
         filteredLogs = filteredLogs.filter(log =>
           log.relatedIds?.includes(args.relatedId!)
         );
       }
-
-      // 複数の関連アクティビティIDのいずれかが含まれるものを検索
       if (args.relatedIds && args.relatedIds.length > 0) {
         filteredLogs = filteredLogs.filter(log =>
           log.relatedIds?.some(id => args.relatedIds?.includes(id))
         );
       }
 
-      // ソートと制限
+
+      // ソート (タイムスタンプ降順)
       filteredLogs.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
 
+      // ページネーション
       const limit = args.limit ?? 50;
       const offset = args.offset ?? 0;
-
       const paginatedLogs = filteredLogs.slice(offset, offset + limit);
 
       return {
         content: [
           {
-            type: 'text',
-            text: JSON.stringify({
+            type: 'json',
+            json: {
               total: filteredLogs.length,
               logs: paginatedLogs,
-            }, null, 2),
+            },
           },
         ],
       };
@@ -729,9 +806,8 @@ class RooActivityLogger {
     }
   }
 
-
   /**
-   * サーバーの起動
+   * サーバーの実行
    */
   async run(): Promise<void> {
     const transport = new StdioServerTransport();
@@ -740,51 +816,57 @@ class RooActivityLogger {
   }
 }
 
-// サーバー起動時の設定
+/**
+ * メイン関数
+ */
 async function main() {
-  try {
-    // デフォルトのログディレクトリを使用
-    const logsDir = DEFAULT_CONFIG.logsDir;
+  // コマンドライン引数の解析
+  const args = process.argv.slice(2);
+  let config: Partial<LoggerConfig> = {};
 
-    // ディレクトリの存在確認と作成
-    try {
-      await fs.access(logsDir);
-    } catch (error) {
-      try {
-        await fs.mkdir(logsDir, { recursive: true });
-        console.log(`ログディレクトリを作成しました: ${logsDir}`);
-      } catch (mkdirError) {
-        console.error(`エラー: ログディレクトリの作成に失敗しました: ${logsDir}`);
-        console.error(mkdirError);
-        process.exit(1);
-      }
+  // ヘルプ表示
+  if (args.includes('--help') || args.includes('-h')) {
+    printHelp();
+    process.exit(0);
+  }
+
+  // 設定引数の処理 (例: --logsDir /path/to/custom/logs)
+  for (let i = 0; i < args.length; i++) {
+    if (args[i] === '--logsDir' && i + 1 < args.length) {
+      config.logsDir = path.resolve(args[i + 1]); // 絶対パスに変換
+      i++; // 値の分もスキップ
     }
+    // 他の設定引数もここに追加可能 (例: --logFilePrefix)
+  }
 
-    // サーバーを起動
-    const server = new RooActivityLogger();
-    await server.run();
+  try {
+    const logger = new RooActivityLogger(config);
+    await logger.run();
   } catch (error) {
-    console.error('サーバーの起動に失敗しました:', error);
+    console.error("サーバーの起動に失敗しました:", error);
+    process.exit(1);
   }
 }
 
-// サーバーの実行
-main().catch(console.error);
-
-// 使用方法を表示する関数（--helpオプションが指定された場合に使用）
+/**
+ * ヘルプメッセージを表示
+ */
 function printHelp() {
   console.log(`
-Roo Activity Logger - Rooの活動を記録するMCPサーバー
+Usage: node index.js [options]
 
-使用方法:
-  node dist/index.js
-
-デフォルトでは、プロジェクトルートディレクトリの 'logs' フォルダにログを保存します。
-  `);
+Options:
+  --logsDir <path>    ログファイルを保存するディレクトリの絶対パスを指定します。
+                      (デフォルト: ${DEFAULT_CONFIG.logsDir})
+  --help, -h          このヘルプメッセージを表示します。
+`);
 }
 
-// ヘルプが要求された場合
-if (process.argv.includes('--help') || process.argv.includes('-h')) {
-  printHelp();
-  process.exit(0);
+
+// スクリプトとして実行された場合にmain関数を呼び出す
+if (import.meta.url === `file://${process.argv[1]}`) {
+  main().catch(error => {
+    console.error("予期せぬエラーが発生しました:", error);
+    process.exit(1);
+  });
 }

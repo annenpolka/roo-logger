@@ -96,6 +96,8 @@ export type GetLogFilesArgs = Readonly<{
   offset?: number;
   logFilePrefix?: string;
   logFileExtension?: string;
+  /** 探索するディレクトリの最大深度（0は指定ディレクトリのみ） */
+  maxDepth?: number;
 }>;
 
 /**
