@@ -863,10 +863,8 @@ Options:
 }
 
 
-// スクリプトとして実行された場合にmain関数を呼び出す
-if (import.meta.url === `file://${process.argv[1]}`) {
-  main().catch(error => {
-    console.error("予期せぬエラーが発生しました:", error);
-    process.exit(1);
-  });
-}
+// main関数を呼び出す
+main().catch(error => {
+  console.error("予期せぬエラーが発生しました:", error);
+  process.exit(1);
+});
