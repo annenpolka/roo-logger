@@ -342,6 +342,11 @@ class RooActivityLogger {
                 },
                 description: '複数の関連アクティビティIDでフィルタリング（例: 指定したIDリストのいずれかを関連IDsに含むログを検索。複数の異なるアクティビティに関連するログをまとめて検索する場合に有用）',
               },
+              maxDepth: { // 追加: maxDepth パラメータ
+                type: 'number',
+                description: '探索するディレクトリの最大深度（0は指定ディレクトリのみ。デフォルト: 3）',
+                default: 3,
+              },
             },
             required: ['logsDir'],
             additionalProperties: false,
@@ -646,14 +651,15 @@ class RooActivityLogger {
         };
       }
 
-      // ログファイルの取得（ここでは再帰しない。get_log_filesで取得したファイルリストを元に検索する想定）
-      const files = await fs.readdir(tempConfig.logsDir);
-      const logFiles = files
-        .filter((file: string) =>
-          file.startsWith(tempConfig.logFilePrefix) &&
-          file.endsWith(tempConfig.logFileExtension))
-        .sort()
-        .reverse(); // 新しいファイルから検索
+      // ログファイルの取得（再帰的に取得）
+      const maxDepth = args.maxDepth ?? 3; // デフォルトの深さを3に設定
+      const allLogFiles = await this.findFilesRecursively(
+        tempConfig.logsDir,
+        tempConfig.logFilePrefix,
+        tempConfig.logFileExtension,
+        maxDepth
+      );
+      const logFiles = allLogFiles.sort().reverse(); // 新しいファイルから検索
 
       // 日付範囲フィルタリング
       let filesToSearch = logFiles;
@@ -699,7 +705,8 @@ class RooActivityLogger {
       // 全ログエントリを読み込み
       let allLogs: ActivityLog[] = [];
       for (const file of filesToSearch) {
-        const filePath = path.join(tempConfig.logsDir, file);
+        // findFilesRecursively はフルパスを返すため、そのまま使用
+        const filePath = file;
         try {
           const fileContent = await fs.readFile(filePath, 'utf-8');
           const logsFromFile: ActivityLog[] = JSON.parse(fileContent);

@@ -6,12 +6,12 @@
  * アクティビティのタイプ定義（as const でリテラル型として保証）
  */
 export const ActivityTypes = {
-  COMMAND_EXECUTION: 'command_execution',
-  CODE_GENERATION: 'code_generation',
-  FILE_OPERATION: 'file_operation',
-  ERROR_ENCOUNTERED: 'error_encountered',
-  DECISION_MADE: 'decision_made',
-  CONVERSATION: 'conversation',
+  COMMAND_EXECUTION: "command_execution",
+  CODE_GENERATION: "code_generation",
+  FILE_OPERATION: "file_operation",
+  ERROR_ENCOUNTERED: "error_encountered",
+  DECISION_MADE: "decision_made",
+  CONVERSATION: "conversation",
 } as const;
 
 /**
@@ -23,10 +23,10 @@ export type ActivityType = typeof ActivityTypes[keyof typeof ActivityTypes];
  * ログレベル定義（as const でリテラル型として保証）
  */
 export const LogLevels = {
-  DEBUG: 'debug',
-  INFO: 'info',
-  WARN: 'warn',
-  ERROR: 'error',
+  DEBUG: "debug",
+  INFO: "info",
+  WARN: "warn",
+  ERROR: "error",
 } as const;
 
 /**
@@ -104,7 +104,7 @@ export type GetLogFilesArgs = Readonly<{
  * 検索モード定義
  */
 export const SearchModes = {
-  NORMAL: 'normal',     // 通常の文字列検索
+  NORMAL: "normal", // 通常の文字列検索
 } as const;
 
 /**
@@ -116,11 +116,11 @@ export type SearchMode = typeof SearchModes[keyof typeof SearchModes];
  * 検索対象フィールド定義
  */
 export const SearchFields = {
-  SUMMARY: 'summary',
-  DETAILS: 'details',
-  INTENTION: 'intention',
-  CONTEXT: 'context',
-  ALL: 'all',          // すべてのフィールドを検索
+  SUMMARY: "summary",
+  DETAILS: "details",
+  INTENTION: "intention",
+  CONTEXT: "context",
+  ALL: "all", // すべてのフィールドを検索
 } as const;
 
 /**
@@ -161,6 +161,8 @@ export type SearchLogsArgs = Readonly<{
   relatedId?: string;
   /** 複数の関連アクティビティIDでフィルタリング（これらのIDのいずれかが関連IDsに含まれるログを検索） */
   relatedIds?: readonly string[];
+  /** 探索するディレクトリの最大深度（0は指定ディレクトリのみ） */
+  maxDepth?: number;
 }>;
 
 /**
