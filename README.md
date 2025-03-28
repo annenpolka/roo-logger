@@ -135,6 +135,8 @@ Cline (もしくはRoo-Code) の設定ファイル（`cline_mcp_settings.json`�
 * デフォルトでは、プロジェクトルートディレクトリの 'logs' フォルダにログが保存されます
 * 指定したディレクトリが存在しない場合は自動的に作成されます
 
+```bash
+# このコードブロックに言語指定を追加
 ```
 
 ## MCP ツールの使用方法
@@ -156,7 +158,7 @@ Cline (もしくはRoo-Code) の設定ファイル（`cline_mcp_settings.json`�
 }
 ```
 
-#### パラメータ一覧
+#### log_activity のパラメータ一覧
 
 | パラメータ名 | 必須 | 型       | 説明                                                                                                                         |
 | ------------ | ---- | -------- | ---------------------------------------------------------------------------------------------------------------------------- |
@@ -171,7 +173,7 @@ Cline (もしくはRoo-Code) の設定ファイル（`cline_mcp_settings.json`�
 | `sequence`   | ❌   | number   | シーケンス番号                                                                                                               |
 | `relatedIds` | ❌   | string[] | 関連アクティビティ ID 配列                                                                                                   |
 
-#### 詳細な使用例
+#### log_activity の詳細な使用例
 
 ```javascript
 // すべてのパラメータを使った詳細な活動記録
@@ -196,7 +198,7 @@ Cline (もしくはRoo-Code) の設定ファイル（`cline_mcp_settings.json`�
 
 保存されたログファイルの一覧を取得するためのツールです。指定されたディレクトリから再帰的にログファイルを検索し、深さ (`maxDepth`) を指定することも可能です。
 
-#### 基本的な使用例
+#### get_log_files の基本的な使用例
 
 ```javascript
 // 必須パラメータを指定（絶対パスのログディレクトリ）
@@ -205,7 +207,7 @@ Cline (もしくはRoo-Code) の設定ファイル（`cline_mcp_settings.json`�
 }
 ```
 
-#### パラメータ一覧
+#### get_log_files のパラメータ一覧
 
 | パラメータ名        | 必須 | 型     | 説明                                                                 |
 | ------------------- | ---- | ------ | -------------------------------------------------------------------- |
@@ -216,7 +218,7 @@ Cline (もしくはRoo-Code) の設定ファイル（`cline_mcp_settings.json`�
 | `logFileExtension`  | ❌   | string | ログファイルの拡張子。デフォルト: `".json"`                          |
 | `maxDepth`          | ❌   | number | 探索するディレクトリの最大深度（0は指定ディレクトリのみ）。デフォルト: `3` |
 
-#### 詳細な使用例
+#### get_log_files の詳細な使用例
 
 ```javascript
 // カスタムパラメータを指定して呼び出し
@@ -234,7 +236,7 @@ Cline (もしくはRoo-Code) の設定ファイル（`cline_mcp_settings.json`�
 
 保存されたログを様々な条件で検索するためのツールです。logsDir（絶対パス）パラメータが必須で、その他のフィルタリングパラメータは任意です。
 
-#### 基本的な使用例
+#### search_logs の基本的な使用例
 
 ```javascript
 // 必須パラメータのみ指定 - 指定ディレクトリの最新50件を取得
@@ -249,13 +251,13 @@ Cline (もしくはRoo-Code) の設定ファイル（`cline_mcp_settings.json`�
 }
 ```
 
-#### パラメータ一覧
+#### search_logs のパラメータ一覧
 
 | パラメータ名       | 必須 | 型       | 説明                                                                                                                                         |
 | ------------------ | ---- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
 | `logsDir`          | ✅   | string   | ログディレクトリ（絶対パスのみ）                                                                                                             |
-| `logFilePrefix`    | ❌   | string   | ログファイル名のプレフィックス                                                                                                               |
-| `logFileExtension` | ❌   | string   | ログファイルの拡張子                                                                                                                         |
+| `logFilePrefix`    | ❌   | string   | ログファイル名のプレフィックス。デフォルト: `"roo-activity-"`                                                                                |
+| `logFileExtension` | ❌   | string   | ログファイルの拡張子。デフォルト: `".json"`                                                                                                  |
 | `type`             | ❌   | string   | 活動タイプでフィルタリング（`command_execution`, `code_generation`, `file_operation`, `error_encountered`, `decision_made`, `conversation`） |
 | `level`            | ❌   | string   | ログレベルでフィルタリング（`debug`, `info`, `warn`, `error`）                                                                               |
 | `startDate`        | ❌   | string   | 検索開始日（YYYY-MM-DD 形式）                                                                                                                |
@@ -269,7 +271,7 @@ Cline (もしくはRoo-Code) の設定ファイル（`cline_mcp_settings.json`�
 | `relatedId`        | ❌   | string   | 特定の ID が関連 IDs に含まれるログを検索                                                                                                    |
 | `relatedIds`       | ❌   | string[] | これらの ID のいずれかが関連 IDs に含まれるログを検索                                                                                        |
 
-#### 複合条件での使用例
+#### search_logs の複合条件での使用例
 
 ```javascript
 // タイプとレベルを組み合わせたフィルタリング
@@ -301,7 +303,7 @@ Cline (もしくはRoo-Code) の設定ファイル（`cline_mcp_settings.json`�
 }
 ```
 
-#### 階層関係・関連性による検索
+#### search_logs の階層関係・関連性による検索
 
 ```javascript
 // 親子関係による検索

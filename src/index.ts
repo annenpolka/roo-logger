@@ -277,6 +277,14 @@ class RooActivityLogger {
                 description: 'ログディレクトリ（絶対パスのみ）',
                 minLength: 1
               },
+              logFilePrefix: {
+                type: 'string',
+                description: 'ログファイル名のプレフィックス（デフォルト: "roo-activity-"）',
+              },
+              logFileExtension: {
+                type: 'string',
+                description: 'ログファイルの拡張子（デフォルト: ".json"）',
+              },
               type: {
                 type: 'string',
                 enum: Object.values(ActivityTypes),
