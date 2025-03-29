@@ -20,11 +20,11 @@
     "prepare": "npm run build"
   },
   "dependencies": {
-    "winston": "^3.10.0",
-    "@modelcontextprotocol/sdk": "^1.6.1",
+    "@modelcontextprotocol/sdk": "^1.8.0",
     "date-fns": "^4.1.0",
     "minimatch": "^10.0.1",
-    "uuid": "^11.1.0"
+    "uuid": "^11.1.0",
+    "winston": "^3.10.0"
   },
   "devDependencies": {
     "@types/jest": "^29.5.4",
