@@ -6,10 +6,6 @@ import {
   SearchModes,
 } from "../types.js";
 
-/**
- * 値がテキストを含むかどうかをチェックする関数
- * 大文字小文字の区別を考慮
- */
 export function textMatches(
   text: string,
   searchTerm: string,
@@ -25,9 +21,6 @@ export function textMatches(
   return targetText.includes(termText);
 }
 
-/**
- * ログのフィールドから検索可能なテキストを抽出する関数
- */
 export function getSearchableText(log: ActivityLog, field: string): string {
   switch (field) {
     case SearchFields.SUMMARY:
@@ -53,9 +46,6 @@ export function getSearchableText(log: ActivityLog, field: string): string {
   }
 }
 
-/**
- * ログエントリの配列をフィルタリング、ソート、ページネーションする関数
- */
 export function filterAndPaginateLogs(
   allLogs: ActivityLog[],
   args: SearchLogsArgs,

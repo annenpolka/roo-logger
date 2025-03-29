@@ -1,10 +1,3 @@
-/**
- * Rooアクティビティロガーの型定義
- */
-
-/**
- * アクティビティのタイプ定義（as const でリテラル型として保証）
- */
 export const ActivityTypes = {
   COMMAND_EXECUTION: "command_execution",
   CODE_GENERATION: "code_generation",
@@ -14,14 +7,10 @@ export const ActivityTypes = {
   CONVERSATION: "conversation",
 } as const;
 
-/**
- * アクティビティタイプのユニオン型（型安全性の向上）
- */
+
 export type ActivityType = typeof ActivityTypes[keyof typeof ActivityTypes];
 
-/**
- * ログレベル定義（as const でリテラル型として保証）
- */
+
 export const LogLevels = {
   DEBUG: "debug",
   INFO: "info",
@@ -29,14 +18,10 @@ export const LogLevels = {
   ERROR: "error",
 } as const;
 
-/**
- * ログレベルのユニオン型（型安全性の向上）
- */
+
 export type LogLevel = typeof LogLevels[keyof typeof LogLevels];
 
-/**
- * アクティビティログのベース構造（読み取り専用で不変性を保証）
- */
+
 export type ActivityLog = Readonly<{
   id: string;
   timestamp: string;
@@ -57,9 +42,7 @@ export type ActivityLog = Readonly<{
   relatedIds?: readonly string[];
 }>;
 
-/**
- * ツールの引数型定義（詳細な型情報で安全性を確保）
- */
+
 export type LogActivityArgs = Readonly<{
   type: ActivityType;
   summary: string;
@@ -78,18 +61,14 @@ export type LogActivityArgs = Readonly<{
   relatedIds?: readonly string[];
 }>;
 
-/**
- * 共通設定パラメータ
- */
+
 export type ToolConfigParams = Readonly<{
   logsDir: string;
   logFilePrefix?: string;
   logFileExtension?: string;
 }>;
 
-/**
- * 保存されたログファイルのリスト取得引数
- */
+
 export type GetLogFilesArgs = Readonly<{
   logsDir: string;
   limit?: number;
@@ -100,21 +79,15 @@ export type GetLogFilesArgs = Readonly<{
   maxDepth?: number;
 }>;
 
-/**
- * 検索モード定義
- */
+
 export const SearchModes = {
   NORMAL: "normal", // 通常の文字列検索
 } as const;
 
-/**
- * 検索モードのユニオン型
- */
+
 export type SearchMode = typeof SearchModes[keyof typeof SearchModes];
 
-/**
- * 検索対象フィールド定義
- */
+
 export const SearchFields = {
   SUMMARY: "summary",
   DETAILS: "details",
@@ -123,14 +96,10 @@ export const SearchFields = {
   ALL: "all", // すべてのフィールドを検索
 } as const;
 
-/**
- * 検索対象フィールドのユニオン型
- */
+
 export type SearchField = typeof SearchFields[keyof typeof SearchFields];
 
-/**
- * ログの検索引数
- */
+
 export type SearchLogsArgs = Readonly<{
   logsDir: string;
   logFilePrefix?: string;
@@ -165,22 +134,16 @@ export type SearchLogsArgs = Readonly<{
   maxDepth?: number;
 }>;
 
-/**
- * Result型によるエラーハンドリング（成功または失敗の結果を表現）
- */
+
 export type Result<T, E = Error> =
   | { success: true; value: T }
   | { success: false; error: E };
 
-/**
- * ログ保存結果
- */
+
 export type LogResult = Result<{ logId: string }, { message: string }>;
 
 
-/**
- * ロガーの内部設定（必須項目のみ）
- */
+
 export interface LoggerConfig {
   logsDir: string;  // ログディレクトリパス（絶対パス）
   logFilePrefix: string;

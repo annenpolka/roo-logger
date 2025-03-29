@@ -14,48 +14,38 @@ import {
   ActivityTypes,
   GetLogFilesArgs,
   LogActivityArgs,
-  // SearchModes, // 削除
-  // SearchFields, // 削除
   LoggerConfig,
   LogLevels,
   SearchLogsArgs,
 } from "./types.js";
-// import { textMatches, getSearchableText } from './utils/search.js'; // 削除
-import { findFilesRecursively, saveLog } from "./utils/fileUtils.js"; // findFilesRecursively をインポート
+import { findFilesRecursively, saveLog } from "./utils/fileUtils.js";
 import { filterAndPaginateLogs } from "./utils/searchUtils.js";
 
-// ディレクトリ関連の設定
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT_DIR = path.resolve(__dirname, "..");
 
-/**
- * デフォルト設定
- */
 export const DEFAULT_CONFIG: LoggerConfig = {
-  logsDir: path.join(ROOT_DIR, "logs"), // デフォルトはプロジェクトルートの logs ディレクトリ
+  logsDir: path.join(ROOT_DIR, "logs"),
   logFilePrefix: "roo-activity-",
   logFileExtension: ".json",
 };
 
 export class RooActivityLogger {
-  public server: Server; // public に変更
-  public config: LoggerConfig; // public に変更して外部からアクセス可能にする (printHelp で使うため)
+  public server: Server;
+  public config: LoggerConfig;
 
   constructor(config?: Partial<LoggerConfig>) {
-    // 設定を初期化（デフォルト設定とユーザー指定の設定をマージ）
     this.config = {
       ...DEFAULT_CONFIG,
       ...config,
     };
 
-    // ログディレクトリが絶対パスかチェック
     if (!path.isAbsolute(this.config.logsDir)) {
       throw new Error(
         `ログディレクトリは絶対パスで指定する必要があります: ${this.config.logsDir}`,
       );
     }
 
-    // MCPサーバーの初期化
     this.server = new Server(
       {
         name: "roo-activity-logger",
@@ -68,27 +58,17 @@ export class RooActivityLogger {
       },
     );
 
-    // ツールのセットアップ
     this.setupTools();
 
-    // エラーハンドリング
     this.server.onerror = (error: Error) => console.error("[MCP Error]", error);
 
-    // シグナルハンドリング
     process.on("SIGINT", async () => {
       await this.server.close();
       process.exit(0);
     });
   }
 
-  /**
-
-
-  /**
-   * MCPツールのセットアップ
-   */
   private setupTools(): void {
-    // ツールの一覧を提供
     this.server.setRequestHandler(ListToolsRequestSchema, async () => ({
       tools: [
         {
@@ -295,7 +275,7 @@ export class RooActivityLogger {
                 description:
                   "複数の関連アクティビティIDでフィルタリング（例: 指定したIDリストのいずれかを関連IDsに含むログを検索。複数の異なるアクティビティに関連するログをまとめて検索する場合に有用）",
               },
-              maxDepth: { // 追加: maxDepth パラメータ
+              maxDepth: {
                 type: "number",
                 description:
                   "探索するディレクトリの最大深度（0は指定ディレクトリのみ。デフォルト: 3）",
@@ -309,7 +289,6 @@ export class RooActivityLogger {
       ],
     }));
 
-    // ツール呼び出しのハンドリング
     this.server.setRequestHandler(
       CallToolRequestSchema,
       async (request: any) => {
@@ -336,11 +315,7 @@ export class RooActivityLogger {
     );
   }
 
-  /**
-   * アクティビティログの作成ハンドラ
-   */
   private async handleLogActivity(args: LogActivityArgs) {
-    // logsDir が存在するか確認（必須パラメータ）
     if (!args.logsDir) {
       return {
         content: [
@@ -353,7 +328,6 @@ export class RooActivityLogger {
       };
     }
 
-    // logsDir が絶対パスであることを確認
     if (!path.isAbsolute(args.logsDir)) {
       return {
         content: [
@@ -381,7 +355,6 @@ export class RooActivityLogger {
       relatedIds: args.relatedIds,
     };
 
-    // ログディレクトリを使用して保存（必須パラメータ）
     const result = await saveLog(log, this.config, args.logsDir);
 
     if (result.success) {
@@ -406,14 +379,9 @@ export class RooActivityLogger {
     }
   }
 
-  // findFilesRecursively メソッドは削除 (fileUtils からインポート)
 
-  /**
-   * ログファイル一覧取得ハンドラ
-   */
   private async handleGetLogFiles(args: GetLogFilesArgs) {
     try {
-      // logsDir が存在するか確認（必須パラメータ）
       if (!args.logsDir) {
         return {
           content: [
@@ -426,7 +394,6 @@ export class RooActivityLogger {
         };
       }
 
-      // 設定パラメータの検証と適用
       if (!path.isAbsolute(args.logsDir)) {
         return {
           content: [
@@ -440,7 +407,6 @@ export class RooActivityLogger {
         };
       }
 
-      // 一時的な設定を適用
       const tempConfig = {
         ...this.config,
         logsDir: args.logsDir,
@@ -457,7 +423,6 @@ export class RooActivityLogger {
       try {
         await fs.access(tempConfig.logsDir);
       } catch {
-        // ディレクトリが存在しない場合
         return {
           content: [
             {
@@ -472,9 +437,8 @@ export class RooActivityLogger {
 
       const limit = args.limit ?? 10;
       const offset = args.offset ?? 0;
-      const maxDepth = args.maxDepth ?? 3; // デフォルトの深さを3に設定
+      const maxDepth = args.maxDepth ?? 3;
 
-      // 再帰的にファイルを取得 (インポートした関数を使用)
       const allLogFiles = await findFilesRecursively(
         tempConfig.logsDir,
         tempConfig.logFilePrefix,
@@ -482,13 +446,11 @@ export class RooActivityLogger {
         maxDepth,
       );
 
-      // ソート、オフセット、リミットを適用
       const logFiles = allLogFiles
-        .sort() // ファイル名でソート (日付順にするため)
-        .reverse() // 新しい順にする
-        .slice(offset, offset + limit); // ページネーション
+        .sort()
+        .reverse()
+        .slice(offset, offset + limit);
 
-      // 結果をテキスト形式で返すように修正
       const resultJson = {
         total: allLogFiles.length,
         files: logFiles,
@@ -496,8 +458,8 @@ export class RooActivityLogger {
       return {
         content: [
           {
-            type: "text", // type を 'text' に変更
-            text: JSON.stringify(resultJson, null, 2), // JSONを文字列化して text に含める
+            type: "text",
+            text: JSON.stringify(resultJson, null, 2),
           },
         ],
       };
@@ -517,12 +479,8 @@ export class RooActivityLogger {
     }
   }
 
-  /**
-   * ログ検索ハンドラ
-   */
   private async handleSearchLogs(args: SearchLogsArgs) {
     try {
-      // logsDir が存在するか確認（必須パラメータ）
       if (!args.logsDir) {
         return {
           content: [
@@ -535,7 +493,6 @@ export class RooActivityLogger {
         };
       }
 
-      // 設定パラメータの検証と適用
       if (!path.isAbsolute(args.logsDir)) {
         return {
           content: [
@@ -549,7 +506,6 @@ export class RooActivityLogger {
         };
       }
 
-      // 一時的な設定を適用
       const tempConfig = {
         ...this.config,
         logsDir: args.logsDir,
@@ -566,7 +522,6 @@ export class RooActivityLogger {
       try {
         await fs.access(tempConfig.logsDir);
       } catch {
-        // ディレクトリが存在しない場合
         return {
           content: [
             {
@@ -579,25 +534,22 @@ export class RooActivityLogger {
         };
       }
 
-      // ログファイルの取得（再帰的に取得, インポートした関数を使用）
-      const maxDepth = args.maxDepth ?? 3; // デフォルトの深さを3に設定
+      const maxDepth = args.maxDepth ?? 3;
       const allLogFiles = await findFilesRecursively(
         tempConfig.logsDir,
         tempConfig.logFilePrefix,
         tempConfig.logFileExtension,
         maxDepth,
       );
-      const logFiles = allLogFiles.sort().reverse(); // 新しいファイルから検索
+      const logFiles = allLogFiles.sort().reverse();
 
-      // 日付範囲フィルタリング
       let filesToSearch = logFiles;
       if (args.startDate && args.endDate) {
         const start = new Date(args.startDate);
         const end = new Date(args.endDate);
-        end.setDate(end.getDate() + 1); // 終了日を含むように調整
+        end.setDate(end.getDate() + 1);
 
         filesToSearch = filesToSearch.filter((file) => {
-          // ファイル名から日付部分を抽出 (パス区切り文字を考慮)
           const fileName = path.basename(file);
           const datePartMatch = fileName.match(
             new RegExp(
@@ -612,7 +564,7 @@ export class RooActivityLogger {
             const fileDate = new Date(datePart);
             return fileDate >= start && fileDate < end;
           } catch {
-            return false; // 不正なファイル名は無視
+            return false;
           }
         });
       } else if (args.startDate) {
@@ -658,10 +610,8 @@ export class RooActivityLogger {
         });
       }
 
-      // 全ログエントリを読み込み
       let allLogs: ActivityLog[] = [];
       for (const file of filesToSearch) {
-        // findFilesRecursively はフルパスを返すため、そのまま使用
         const filePath = file;
         try {
           const fileContent = await fs.readFile(filePath, "utf-8");
@@ -672,11 +622,9 @@ export class RooActivityLogger {
             `Error reading or parsing log file ${filePath}:`,
             readError,
           );
-          // エラーが発生したファイルはスキップ
         }
       }
 
-      // フィルタリング、ソート、ページネーションを外部関数に委譲
       const { total, logs: paginatedLogs } = filterAndPaginateLogs(
         allLogs,
         args,
@@ -706,5 +654,4 @@ export class RooActivityLogger {
     }
   }
 
-  // run メソッドは削除
 }

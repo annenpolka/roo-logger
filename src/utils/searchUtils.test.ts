@@ -5,14 +5,13 @@ import {
   LogLevels,
   SearchFields,
   SearchLogsArgs,
-} from "../types.js"; // 必要な型をインポート
-import { filterAndPaginateLogs } from "./searchUtils.js"; // 対象関数をインポート (まだ存在しないはず)
+} from "../types.js";
+import { filterAndPaginateLogs } from "./searchUtils.js";
 
-// モックデータ生成ヘルパー
 const createMockLog = (override: Partial<ActivityLog> = {}): ActivityLog => ({
   id: `id-${Math.random()}`,
   timestamp: new Date().toISOString(),
-  type: ActivityTypes.COMMAND_EXECUTION, // デフォルトを修正
+  type: ActivityTypes.COMMAND_EXECUTION,
   level: LogLevels.INFO,
   summary: "Default summary",
   details: {},
@@ -21,7 +20,6 @@ const createMockLog = (override: Partial<ActivityLog> = {}): ActivityLog => ({
   ...override,
 });
 
-// モックログデータ
 const mockLogs: ActivityLog[] = [
   createMockLog({
     id: "log1",
@@ -94,12 +92,11 @@ const mockLogs: ActivityLog[] = [
 ];
 
 describe("filterAndPaginateLogs", () => {
-  // この時点では filterAndPaginateLogs は未定義なので、テストは失敗するはず
   it("フィルタなしの場合、全ログをタイムスタンプ降順で返すこと", () => {
     const args: SearchLogsArgs = { logsDir: "/fake" };
     const result = filterAndPaginateLogs(mockLogs, args);
     expect(result.total).toBe(7);
-    expect(result.logs.length).toBe(7); // Assuming default limit is high enough or pagination is handled later
+    expect(result.logs.length).toBe(7);
     expect(result.logs.map((log) => log.id)).toEqual([
       "log7",
       "log6",
@@ -147,12 +144,12 @@ describe("filterAndPaginateLogs", () => {
       caseSensitive: true,
     };
     const result = filterAndPaginateLogs(mockLogs, args);
-    expect(result.total).toBe(2); // "Run npm install", "Run tests"
+    expect(result.total).toBe(2);
     expect(result.logs.map((log) => log.id)).toEqual(["log7", "log1"]);
   });
 
   it("searchText で details を検索できること", () => {
-    const args: SearchLogsArgs = { logsDir: "/fake", searchText: "button" }; // "Button" in details
+    const args: SearchLogsArgs = { logsDir: "/fake", searchText: "button" };
     const result = filterAndPaginateLogs(mockLogs, args);
     expect(result.total).toBe(1);
     expect(result.logs[0].id).toBe("log2");
@@ -165,7 +162,7 @@ describe("filterAndPaginateLogs", () => {
     };
     const result = filterAndPaginateLogs(mockLogs, args);
     expect(result.total).toBe(2);
-    expect(result.logs.map((log) => log.id)).toEqual(["log3", "log2"]); // log3: Update, log2: Generate
+    expect(result.logs.map((log) => log.id)).toEqual(["log3", "log2"]);
   });
 
   it("searchFields で検索対象フィールドを指定できること (intention のみ)", () => {
@@ -176,7 +173,7 @@ describe("filterAndPaginateLogs", () => {
     };
     const result = filterAndPaginateLogs(mockLogs, args);
     expect(result.total).toBe(1);
-    expect(result.logs[0].id).toBe("log5"); // log5 の intention に "Performance improvement"
+    expect(result.logs[0].id).toBe("log5");
   });
 
   it("searchFields で検索対象フィールドを指定できること (summary と context)", () => {
@@ -187,7 +184,7 @@ describe("filterAndPaginateLogs", () => {
     };
     const result = filterAndPaginateLogs(mockLogs, args);
     expect(result.total).toBe(1);
-    expect(result.logs[0].id).toBe("log3"); // log3 の summary と context に "Update"
+    expect(result.logs[0].id).toBe("log3");
   });
 
   it("parentId でフィルタリングできること", () => {
@@ -245,7 +242,7 @@ describe("filterAndPaginateLogs", () => {
     };
     const result = filterAndPaginateLogs(mockLogs, args);
     expect(result.total).toBe(3);
-    expect(result.logs.map((log) => log.id)).toEqual(["log5", "log2", "log1"]); // log5(issue3), log2(issue1), log1(issue1)
+    expect(result.logs.map((log) => log.id)).toEqual(["log5", "log2", "log1"]);
   });
 
   it("limit で取得件数を制限できること", () => {
@@ -260,7 +257,7 @@ describe("filterAndPaginateLogs", () => {
     const args: SearchLogsArgs = { logsDir: "/fake", offset: 2 };
     const result = filterAndPaginateLogs(mockLogs, args);
     expect(result.total).toBe(7);
-    expect(result.logs.length).toBe(5); // 7 - 2 = 5
+    expect(result.logs.length).toBe(5);
     expect(result.logs.map((log) => log.id)).toEqual([
       "log5",
       "log4",
@@ -275,7 +272,7 @@ describe("filterAndPaginateLogs", () => {
     const result = filterAndPaginateLogs(mockLogs, args);
     expect(result.total).toBe(7);
     expect(result.logs.length).toBe(2);
-    expect(result.logs.map((log) => log.id)).toEqual(["log4", "log3"]); // 4番目と5番目
+    expect(result.logs.map((log) => log.id)).toEqual(["log4", "log3"]);
   });
 
   it("空のログリストを渡した場合、空の結果を返すこと", () => {

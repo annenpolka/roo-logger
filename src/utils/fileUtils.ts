@@ -4,16 +4,6 @@ import { format } from 'date-fns';
 import { v4 as uuidv4 } from 'uuid';
 import { ActivityLog, LogResult, LoggerConfig } from '../types.js'; // 型定義をインポート
 
-/**
- * 指定されたディレクトリから条件に一致するファイルを再帰的に検索します。
- *
- * @param dir 検索を開始するディレクトリのパス
- * @param prefix ファイル名のプレフィックス
- * @param extension ファイルの拡張子
- * @param maxDepth 再帰検索の最大深度 (0 は指定されたディレクトリのみ)
- * @param currentDepth 現在の検索深度 (内部使用)
- * @returns 条件に一致するファイルのフルパスの配列
- */
 export async function findFilesRecursively(
   dir: string,
   prefix: string,
@@ -48,10 +38,6 @@ export async function findFilesRecursively(
   return files;
 }
 
-/**
- * 指定されたログディレクトリが存在することを確認し、存在しない場合は作成します。
- * @param logsDir 確認または作成するログディレクトリのパス（絶対パス）
- */
 export async function ensureLogsDirectory(logsDir: string): Promise<void> {
   try {
     await fs.access(logsDir);
@@ -66,12 +52,6 @@ export async function ensureLogsDirectory(logsDir: string): Promise<void> {
   }
 }
 
-/**
- * ログファイル名を生成します。
- * @param config ログファイル名のプレフィックスと拡張子を含む設定オブジェクト
- * @param date ファイル名の基準となる日付 (デフォルトは現在日時)
- * @returns 生成されたログファイル名 (例: roo-activity-2025-03-29.json)
- */
 export function getLogFileName(
   config: Pick<LoggerConfig, 'logFilePrefix' | 'logFileExtension'>,
   date: Date = new Date()
@@ -79,13 +59,6 @@ export function getLogFileName(
   return `${config.logFilePrefix ?? 'roo-activity-'}${format(date, 'yyyy-MM-dd')}${config.logFileExtension ?? '.json'}`;
 }
 
-/**
- * アクティビティログを指定されたファイルに保存（追記）します。
- * @param log 保存するアクティビティログオブジェクト
- * @param config ロガーの設定オブジェクト
- * @param customLogsDir 保存先のカスタムログディレクトリ（絶対パス、指定されない場合はconfigの値を使用）
- * @returns 保存結果（成功時はログID、失敗時はエラーメッセージ）
- */
 export async function saveLog(
   log: ActivityLog,
   config: LoggerConfig,
