@@ -59,14 +59,7 @@ Cline (もしくはRoo-Code) の設定ファイル（`cline_mcp_settings.json`�
         "github:annenpolka/roo-logger"
       ],
       "env": {},
-      "disabled": false,
-      "alwaysAllow": [
-        "get_log_files",
-        "search_logs",
-        "set_logs_directory",
-        "log_activity"
-      ],
-      "timeout": 300
+      "disabled": false
     }
   }
 }
