@@ -24,23 +24,17 @@ import {
   SearchModes,
   SearchFields,
   SearchMode,
-  SearchField
+  SearchField,
+  LoggerConfig // LoggerConfig を追加
 } from './types.js';
 import { textMatches, getSearchableText } from './utils/search.js';
+import { saveLog } from './utils/fileUtils.js';
+import { findFilesRecursively } from './utils/fileUtils.js';
 
 // ディレクトリ関連の設定
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // サーバーのルートディレクトリの取得
 const ROOT_DIR = path.resolve(__dirname, '..');
-
-/**
- * 設定の型
- */
-interface LoggerConfig {
-  logsDir: string;  // ログディレクトリパス（絶対パス）
-  logFilePrefix: string;
-  logFileExtension: string;
-}
 
 /**
  * デフォルト設定
@@ -94,73 +88,7 @@ class RooActivityLogger {
   }
 
   /**
-   * ディレクトリの存在を確認し、なければ作成
-   */
-  private async ensureLogsDirectory(): Promise<void> {
-    try {
-      await fs.access(this.config.logsDir);
-    } catch {
-      await fs.mkdir(this.config.logsDir, { recursive: true });
-    }
-  }
 
-  /**
-   * ログファイル名を生成
-   */
-  private getLogFileName(date: Date = new Date()): string {
-    return `${this.config.logFilePrefix ?? 'roo-activity-'}${format(date, 'yyyy-MM-dd')}${this.config.logFileExtension ?? '.json'}`;
-  }
-
-  /**
-   * ログを保存
-   */
-  private async saveLog(log: ActivityLog, customLogsDir?: string): Promise<LogResult> {
-    try {
-      // 保存先ディレクトリの設定（一時的なカスタムディレクトリか通常の設定を使用）
-      const originalLogsDir = this.config.logsDir;
-
-      try {
-        // カスタムディレクトリが指定されていれば、一時的に設定を変更
-        if (customLogsDir) {
-          // 絶対パスでなければエラー
-          if (!path.isAbsolute(customLogsDir)) {
-            return { success: false, error: { message: `ログディレクトリは絶対パスで指定する必要があります: ${customLogsDir}` } };
-          }
-          this.config.logsDir = customLogsDir;
-        }
-
-        await this.ensureLogsDirectory();
-
-        const fileName = this.getLogFileName();
-        const filePath = path.join(this.config.logsDir, fileName);
-
-        // 既存のログファイルを読み込むか、新規作成
-        let logs: ActivityLog[] = [];
-        try {
-          const fileContent = await fs.readFile(filePath, 'utf-8');
-          logs = JSON.parse(fileContent);
-        } catch {
-          // ファイルが存在しない場合は空の配列から開始
-        }
-
-        // 新しいログを追加
-        logs.push(log);
-
-        // ファイルに書き込み
-        await fs.writeFile(filePath, JSON.stringify(logs, null, 2), 'utf-8');
-
-        return { success: true, value: { logId: log.id } };
-      } finally {
-        // 元のディレクトリ設定に戻す
-        if (customLogsDir) {
-          this.config.logsDir = originalLogsDir;
-        }
-      }
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      return { success: false, error: { message: errorMessage } };
-    }
-  }
 
   /**
    * MCPツールのセットアップ
@@ -418,7 +346,7 @@ class RooActivityLogger {
     };
 
     // ログディレクトリを使用して保存（必須パラメータ）
-    const result = await this.saveLog(log, args.logsDir);
+    const result = await saveLog(log, this.config, args.logsDir);
 
     if (result.success) {
       return {
@@ -551,7 +479,7 @@ class RooActivityLogger {
       const maxDepth = args.maxDepth ?? 3; // デフォルトの深さを3に設定
 
       // 再帰的にファイルを取得
-      const allLogFiles = await this.findFilesRecursively(
+      const allLogFiles = await findFilesRecursively(
         tempConfig.logsDir,
         tempConfig.logFilePrefix,
         tempConfig.logFileExtension,
@@ -653,7 +581,7 @@ class RooActivityLogger {
 
       // ログファイルの取得（再帰的に取得）
       const maxDepth = args.maxDepth ?? 3; // デフォルトの深さを3に設定
-      const allLogFiles = await this.findFilesRecursively(
+      const allLogFiles = await findFilesRecursively(
         tempConfig.logsDir,
         tempConfig.logFilePrefix,
         tempConfig.logFileExtension,
@@ -783,7 +711,7 @@ class RooActivityLogger {
       }
       if (args.relatedIds && args.relatedIds.length > 0) {
         filteredLogs = filteredLogs.filter(log =>
-          log.relatedIds?.some(id => args.relatedIds?.includes(id))
+          log.relatedIds?.some((id: string) => args.relatedIds?.includes(id))
         );
       }
 

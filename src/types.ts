@@ -176,3 +176,13 @@ export type Result<T, E = Error> =
  * ログ保存結果
  */
 export type LogResult = Result<{ logId: string }, { message: string }>;
+
+
+/**
+ * ロガーの内部設定（必須項目のみ）
+ */
+export interface LoggerConfig {
+  logsDir: string;  // ログディレクトリパス（絶対パス）
+  logFilePrefix: string;
+  logFileExtension: string;
+}
