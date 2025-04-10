@@ -1,16 +1,19 @@
 # Roo Activity Logger
 
+[English version here](./README.md)
+
 ## TL;DR
 
-- **これは何？**: Roo の活動（コマンド実行、コード生成など）を記録するための **MCP サーバー** です。
+- **これは何？**: Roo の活動（コマンド実行、コード生成など）を自動記録するための **MCP サーバー** です。
 - **何ができる？**: 活動履歴を JSON 形式で保存し、後から検索・分析できます。
-- **どう使う？**: Cline/Roo-Code の設定に追加して、Roo の活動を自動記録させます。
-
-Roo の活動を自動的に記録する MCP サーバー
+- **どう使う？**: Cline や Roo-Code の設定に追加して、Roo の活動を自動記録させます。
 
 ## 概要
 
-### 作業時のアクティビティ記録フロー
+Roo Activity Logger は、Roo の開発活動（コマンド実行、コード生成、ファイル操作など）を自動的に記録する MCP (Model Context Protocol) サーバーです。
+全てのログは JSON 形式で保存されるため、いつでも簡単に検索、分析、文脈の復元が可能です。
+
+### アクティビティ記録の仕組み
 
 ```mermaid
 flowchart TD
@@ -21,7 +24,7 @@ flowchart TD
     E --> F[JSONファイルに保存]
 ```
 
-### タスク再開時の履歴検索と文脈復元フロー
+### タスク再開時のログ検索と文脈復元方法
 
 ```mermaid
 flowchart TD
@@ -31,11 +34,9 @@ flowchart TD
     J --> K[文脈を復元して再開<br>- 過去の意図確認<br>- 作業状況把握]
 ```
 
-このプロジェクトは、Roo による開発活動を記録するための Model Context Protocol（MCP）サーバーを提供します。コマンド実行、コード生成、ファイル操作などの活動を自動的に記録し、後から検索・分析できるようにします。
+### ログエントリのサンプル
 
-### ログデータのサンプル
-
-以下は、`file_operation`タイプのログの例です。実際のログは JSON 形式で保存されます。
+以下は、JSON として保存される `file_operation` ログエントリの例です。
 
 ```json
 {
@@ -56,9 +57,9 @@ flowchart TD
 }
 ```
 
-このように、各ログには一意の ID、タイムスタンプ、活動タイプ、詳細情報、意図、文脈などが記録されます。
+各ログには以下が含まれます:
 
-- ログレベル (debug, info, warn, error)
+- ログレベル (`debug`, `info`, `warn`, `error`)
 - 概要
 - 詳細情報（任意の構造データ）
 - 活動の意図・目的
@@ -67,13 +68,15 @@ flowchart TD
 - シーケンス番号（関連アクティビティの順序）
 - 関連アクティビティの ID 配列（グループ化用）
 
-- **保存**: 日付ベースの JSON ファイルに保存
-- **検索**: タイプ、レベル、日付、テキストなどで検索可能
-- **カスタムディレクトリ**: 活動ごとに保存先を指定可能
+ログは:
+
+- **保存**: 日付ベースの JSON ファイルに保存されます
+- **検索**: タイプ、レベル、日付、テキストなどで検索可能です
+- **カスタマイズ可能**: 活動ごとに異なる保存先ディレクトリを指定できます
 
 ## 機能
 
-- **活動記録**: 様々な種類の活動を記録
+- **様々な活動タイプを記録:**
   - コマンド実行 (`command_execution`)
   - コード生成 (`code_generation`)
   - ファイル操作 (`file_operation`)
@@ -81,16 +84,17 @@ flowchart TD
   - 判断記録 (`decision_made`)
   - 会話記録 (`conversation`)
 
-- **記録情報**: 各活動について以下の情報を記録
+- **各活動ログに含まれる情報:**
   - 一意の ID
   - タイムスタンプ
   - 活動タイプ
+  - 概要、詳細、意図、文脈、およびオプションのメタデータ
 
-## 使用方法 (推奨: npx を使用)
+## 使用方法 (推奨: `npx` を使用)
 
-`npx` を使うことで、リポジトリをクローンせずに直接 MCP サーバーを実行できます。
+`npx` を使うことで、リポジトリをクローンせずに直接 Roo Activity Logger を実行できます。
 
-Cline (もしくは Roo-Code) の設定ファイルに以下を追加します：
+Cline または Roo-Code の設定に以下を追加します:
 
 ```json
 {
@@ -131,7 +135,7 @@ Cline (もしくは Roo-Code) の設定ファイルに以下を追加します�
 
 ## 開発者向け: ローカルでのセットアップ
 
-リポジトリをローカルにクローンして開発やカスタマイズを行う場合は、以下の手順を実行します。
+ローカルで開発やカスタマイズを行う場合は、リポジトリをクローンしてビルドします:
 
 ```bash
 # リポジトリのクローン (yourusername を実際のユーザー名/組織名に置き換えてください)
@@ -145,14 +149,14 @@ npm install
 npm run build
 ```
 
-ローカルでビルドしたサーバーを使用する場合の設定例:
+ローカルビルドを使用する場合の設定例:
 
 ```json
 {
   "mcpServers": {
     "roo-activity-logger": {
       "command": "node",
-      "args": ["/path/to/your/local/roo-logger/dist/index.js"], // クローンしたパスに合わせて変更
+      "args": ["/path/to/your/local/roo-logger/dist/index.js"], // パスを適宜調整してください
       "env": {},
       "disabled": false
     }
@@ -164,9 +168,11 @@ npm run build
 
 - 指定したディレクトリが存在しない場合は自動的に作成されます
 
-## MCP ツールの使用方法
+---
 
-### log_activity - 活動の記録
+## MCP ツール
+
+### `log_activity` — 活動の記録
 
 活動を記録するためのツールです。
 
@@ -182,22 +188,22 @@ npm run build
 }
 ```
 
-#### log_activity のパラメータ一覧
+#### パラメータ
 
-| パラメータ名 | 必須 | 型       | 説明                                                                                                                         |
+| 名前         | 必須 | 型       | 説明                                                                                                                         |
 | ------------ | ---- | -------- | ---------------------------------------------------------------------------------------------------------------------------- |
 | `type`       | ✅   | string   | 活動の種類（`command_execution`, `code_generation`, `file_operation`, `error_encountered`, `decision_made`, `conversation`） |
-| `summary`    | ✅   | string   | 活動の要約                                                                                                                   |
-| `intention`  | ✅   | string   | 活動を行う意図・目的を説明するテキスト                                                                                       |
-| `context`    | ✅   | string   | 活動の文脈情報を説明するテキスト                                                                                             |
-| `logsDir`    | ✅   | string   | 保存先ディレクトリ（**必須・絶対パスのみ**）                                                                                 |
+| `summary`    | ✅   | string   | 活動の簡単な要約                                                                                                             |
+| `intention`  | ✅   | string   | 目的または意図                                                                                                               |
+| `context`    | ✅   | string   | 文脈情報                                                                                                                     |
+| `logsDir`    | ✅   | string   | 保存先ディレクトリ（**絶対パスのみ**）                                                                                       |
 | `level`      | ❌   | string   | ログレベル（`debug`, `info`, `warn`, `error`）。デフォルト: `info`                                                           |
-| `details`    | ❌   | object   | 活動の詳細情報（任意の JSON 構造）                                                                                           |
+| `details`    | ❌   | object   | 追加の詳細情報（任意の JSON）                                                                                                |
 | `parentId`   | ❌   | string   | 親アクティビティ ID                                                                                                          |
 | `sequence`   | ❌   | number   | シーケンス番号                                                                                                               |
 | `relatedIds` | ❌   | string[] | 関連アクティビティ ID 配列                                                                                                   |
 
-#### log_activity の詳細な使用例
+#### 詳細な使用例
 
 ```json
 {
@@ -219,11 +225,11 @@ npm run build
 
 ---
 
-### get_log_files - ログファイル一覧の取得
+### `get_log_files` — 保存されたログファイルの一覧を取得
 
-保存されたログファイルの一覧を取得するためのツールです。指定されたディレクトリから再帰的にログファイルを検索し、深さ (`maxDepth`) を指定することも可能です。
+保存されたログファイルを再帰的に一覧表示します。最大検索深度を指定できます。
 
-#### get_log_files の基本的な使用例
+#### 基本的な使用例
 
 ```json
 {
@@ -231,24 +237,24 @@ npm run build
 }
 ```
 
-#### get_log_files のパラメータ一覧
+#### パラメータ
 
-| パラメータ名       | 必須 | 型     | 説明                                                                        |
+| 名前               | 必須 | 型     | 説明                                                                        |
 | ------------------ | ---- | ------ | --------------------------------------------------------------------------- |
-| `logsDir`          | ✅   | string | ログファイルを検索するディレクトリパス（絶対パスのみ）                      |
-| `limit`            | ❌   | number | 取得する最大ファイル数。デフォルト: `10`                                    |
-| `offset`           | ❌   | number | スキップするファイル数。デフォルト: `0`                                     |
-| `logFilePrefix`    | ❌   | string | ログファイル名のプレフィックス。デフォルト: `"roo-activity-"`               |
-| `logFileExtension` | ❌   | string | ログファイルの拡張子。デフォルト: `".json"`                                 |
-| `maxDepth`         | ❌   | number | 探索するディレクトリの最大深度（0 は指定ディレクトリのみ）。デフォルト: `3` |
+| `logsDir`          | ✅   | string | 検索するディレクトリ（絶対パスのみ）                                        |
+| `limit`            | ❌   | number | 取得する最大ファイル数（デフォルト: 10）                                    |
+| `offset`           | ❌   | number | スキップするファイル数（デフォルト: 0）                                     |
+| `logFilePrefix`    | ❌   | string | ログファイル名のプレフィックス（デフォルト: `"roo-activity-"`）             |
+| `logFileExtension` | ❌   | string | ログファイルの拡張子（デフォルト: `".json"`）                               |
+| `maxDepth`         | ❌   | number | 最大ディレクトリ深度（デフォルト: 3）                                       |
 
 ---
 
-### search_logs - ログの検索
+### `search_logs` — 保存されたログの検索
 
-保存されたログを様々な条件で検索するためのツールです。
+様々なフィルターを使用して保存されたログを検索します。
 
-#### search_logs の基本的な使用例
+#### 基本的な使用例
 
 ```json
 {
@@ -263,25 +269,25 @@ npm run build
 }
 ```
 
-#### search_logs のパラメータ一覧
+#### パラメータ
 
-| パラメータ名       | 必須 | 型       | 説明                                                                                                                                         |
+| 名前               | 必須 | 型       | 説明                                                                                                                                         |
 | ------------------ | ---- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
 | `logsDir`          | ✅   | string   | ログディレクトリ（絶対パスのみ）                                                                                                             |
-| `logFilePrefix`    | ❌   | string   | ログファイル名のプレフィックス。デフォルト: `"roo-activity-"`                                                                                |
-| `logFileExtension` | ❌   | string   | ログファイルの拡張子。デフォルト: `".json"`                                                                                                  |
+| `logFilePrefix`    | ❌   | string   | ログファイル名のプレフィックス（デフォルト: `"roo-activity-"`）                                                                                |
+| `logFileExtension` | ❌   | string   | ログファイルの拡張子（デフォルト: `".json"`）                                                                                                  |
 | `type`             | ❌   | string   | 活動タイプでフィルタリング（`command_execution`, `code_generation`, `file_operation`, `error_encountered`, `decision_made`, `conversation`） |
 | `level`            | ❌   | string   | ログレベルでフィルタリング（`debug`, `info`, `warn`, `error`）                                                                               |
-| `startDate`        | ❌   | string   | 検索開始日（YYYY-MM-DD 形式）                                                                                                                |
-| `endDate`          | ❌   | string   | 検索終了日（YYYY-MM-DD 形式）                                                                                                                |
-| `searchText`       | ❌   | string   | ログの概要または詳細に含まれるテキストで検索                                                                                                 |
-| `limit`            | ❌   | number   | 取得する最大ログ数。デフォルト: `50`                                                                                                         |
-| `offset`           | ❌   | number   | スキップするログ数。デフォルト: `0`                                                                                                          |
-| `parentId`         | ❌   | string   | 特定の親アクティビティに関連するログのみを取得                                                                                               |
+| `startDate`        | ❌   | string   | 開始日（YYYY-MM-DD 形式）                                                                                                                    |
+| `endDate`          | ❌   | string   | 終了日（YYYY-MM-DD 形式）                                                                                                                    |
+| `searchText`       | ❌   | string   | 概要または詳細に含まれるテキストで検索                                                                                                       |
+| `limit`            | ❌   | number   | 取得する最大ログ数（デフォルト: 50）                                                                                                         |
+| `offset`           | ❌   | number   | スキップするログ数（デフォルト: 0）                                                                                                          |
+| `parentId`         | ❌   | string   | 親アクティビティ ID でフィルタリング                                                                                                         |
 | `sequenceFrom`     | ❌   | number   | シーケンス番号の下限値                                                                                                                       |
 | `sequenceTo`       | ❌   | number   | シーケンス番号の上限値                                                                                                                       |
-| `relatedId`        | ❌   | string   | 特定の ID が関連 IDs に含まれるログを検索                                                                                                    |
-| `relatedIds`       | ❌   | string[] | これらの ID のいずれかが関連 IDs に含まれるログを検索                                                                                        |
+| `relatedId`        | ❌   | string   | 関連アクティビティ ID でフィルタリング                                                                                                       |
+| `relatedIds`       | ❌   | string[] | これらの関連アクティビティ ID のいずれかでフィルタリング                                                                                     |
 
 ---
 
