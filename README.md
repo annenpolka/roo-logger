@@ -4,7 +4,7 @@
 
 ## TL;DR
 
-- **What is it?** — This is an **MCP server** that automatically logs Roo's activities, such as command executions and code generation.
+- **What is it?** — This is an **MCP server** that automatically logs Roo Code(Cline)'s activities, such as command executions and code generation.
 - **What does it do?** — It saves activity history as JSON files, which you can search and analyze later.
 - **How do I use it?** — Add it to your Cline or Roo-Code settings to enable automatic activity logging.
 
