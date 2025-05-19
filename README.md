@@ -1,3 +1,5 @@
+[![MseeP.ai Security Assessment Badge](https://mseep.net/pr/annenpolka-roo-logger-badge.png)](https://mseep.ai/app/annenpolka-roo-logger)
+
 # Roo Activity Logger
 
 [日本語版はこちら](./README.ja.md)
