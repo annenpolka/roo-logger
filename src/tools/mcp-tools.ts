@@ -1,9 +1,9 @@
 import { Result, success, failure } from '../types/result.js'
-import { ActivityLogInput, validateActivityLogInput } from '../functions/validation.js'
 import { createActivityLog } from '../functions/log-entry.js'
 import { generateLogFileName, appendToJsonFile, readJsonFile, ensureDirectoryExists } from '../functions/file-io.js'
 import { filterLogs, applyPagination, SearchFilters } from '../functions/search.js'
-import { LogActivityResult, GetLogFilesArgs, GetLogFilesResult, SearchLogsArgs, SearchLogsResult, LogFileInfo } from '../types/search.js'
+import { LogActivityResult, GetLogFilesResult, SearchLogsResult, LogFileInfo } from '../types/search.js'
+import { LogActivityArgs, GetLogFilesArgs, SearchLogsArgs } from '../schemas/tool-schemas.js'
 import { promises as fs } from 'fs'
 import path from 'path'
 
@@ -14,15 +14,10 @@ export class MCPToolError extends Error {
   }
 }
 
-export const logActivityTool = async (input: unknown): Promise<Result<LogActivityResult, MCPToolError>> => {
+export const logActivityTool = async (input: LogActivityArgs): Promise<Result<LogActivityResult, MCPToolError>> => {
   try {
-    // 入力検証
-    const validationResult = validateActivityLogInput(input)
-    if (validationResult.type === 'failure') {
-      return failure(new MCPToolError(validationResult.error.message, validationResult.error))
-    }
-
-    const validInput = validationResult.value
+    // 入力は既にZodで検証済み
+    const validInput = input
 
     // ログエントリ作成
     const log = createActivityLog(validInput)

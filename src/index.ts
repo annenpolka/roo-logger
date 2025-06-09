@@ -6,8 +6,12 @@ import {
   CallToolRequestSchema,
   ListToolsRequestSchema
 } from '@modelcontextprotocol/sdk/types.js'
-import { logActivityTool, getLogFilesTool, searchLogsTool } from './tools/mcp-tools.js'
-import { GetLogFilesArgs, SearchLogsArgs } from './types/search.js'
+import { TypedMCPHandlers } from './handlers/tool-handlers.js'
+import { 
+  logActivityInputSchema, 
+  getLogFilesInputSchema, 
+  searchLogsInputSchema 
+} from './schemas/tool-schemas.js'
 
 const server = new Server(
   {
@@ -21,250 +25,79 @@ const server = new Server(
   }
 )
 
-// ツール一覧の定義
+// ツール一覧の定義 - JSON Schema from schemas
 server.setRequestHandler(ListToolsRequestSchema, async () => {
   return {
     tools: [
       {
         name: 'log_activity',
-        description: 'Record an activity log entry',
-        inputSchema: {
-          type: 'object',
-          properties: {
-            type: {
-              type: 'string',
-              enum: ['command_execution', 'code_generation', 'file_operation', 'error_encountered', 'decision_made', 'conversation'],
-              description: 'Type of activity'
-            },
-            summary: {
-              type: 'string',
-              description: 'Brief summary of the activity'
-            },
-            intention: {
-              type: 'string',
-              description: 'Purpose or intention behind the activity'
-            },
-            context: {
-              type: 'string',
-              description: 'Context information'
-            },
-            logsDir: {
-              type: 'string',
-              description: 'Directory to save logs (absolute path)'
-            },
-            level: {
-              type: 'string',
-              enum: ['debug', 'info', 'warn', 'error'],
-              description: 'Log level (default: info)'
-            },
-            details: {
-              type: 'object',
-              description: 'Additional structured details'
-            },
-            parentId: {
-              type: 'string',
-              description: 'Parent activity ID'
-            },
-            sequence: {
-              type: 'number',
-              description: 'Sequence number'
-            },
-            relatedIds: {
-              type: 'array',
-              items: { type: 'string' },
-              description: 'Related activity IDs'
-            }
-          },
-          required: ['type', 'summary', 'intention', 'context', 'logsDir']
-        }
+        description: 'Record an activity log entry with structured data for tracking development activities, decisions, and context',
+        inputSchema: logActivityInputSchema
       },
       {
         name: 'get_log_files',
-        description: 'Get list of log files',
-        inputSchema: {
-          type: 'object',
-          properties: {
-            logsDir: {
-              type: 'string',
-              description: 'Directory to search for logs (absolute path)'
-            },
-            limit: {
-              type: 'number',
-              description: 'Maximum number of files to return (default: 10)'
-            },
-            offset: {
-              type: 'number',
-              description: 'Number of files to skip (default: 0)'
-            },
-            logFilePrefix: {
-              type: 'string',
-              description: 'Log file prefix (default: "roo-activity-")'
-            },
-            logFileExtension: {
-              type: 'string',
-              description: 'Log file extension (default: ".json")'
-            },
-            maxDepth: {
-              type: 'number',
-              description: 'Maximum directory depth to search (default: 3)'
-            }
-          },
-          required: ['logsDir']
-        }
+        description: 'Get a paginated list of available log files in the specified directory with filtering options',
+        inputSchema: getLogFilesInputSchema
       },
       {
         name: 'search_logs',
-        description: 'Search log entries with various filters',
-        inputSchema: {
-          type: 'object',
-          properties: {
-            logsDir: {
-              type: 'string',
-              description: 'Directory to search for logs (absolute path)'
-            },
-            logFilePrefix: {
-              type: 'string',
-              description: 'Log file prefix (default: "roo-activity-")'
-            },
-            logFileExtension: {
-              type: 'string',
-              description: 'Log file extension (default: ".json")'
-            },
-            type: {
-              type: 'string',
-              enum: ['command_execution', 'code_generation', 'file_operation', 'error_encountered', 'decision_made', 'conversation'],
-              description: 'Filter by activity type'
-            },
-            level: {
-              type: 'string',
-              enum: ['debug', 'info', 'warn', 'error'],
-              description: 'Filter by log level'
-            },
-            startDate: {
-              type: 'string',
-              description: 'Start date filter (YYYY-MM-DD)'
-            },
-            endDate: {
-              type: 'string',
-              description: 'End date filter (YYYY-MM-DD)'
-            },
-            searchText: {
-              type: 'string',
-              description: 'Search text in summary or details'
-            },
-            limit: {
-              type: 'number',
-              description: 'Maximum number of logs to return (default: 50)'
-            },
-            offset: {
-              type: 'number',
-              description: 'Number of logs to skip (default: 0)'
-            },
-            parentId: {
-              type: 'string',
-              description: 'Filter by parent activity ID'
-            },
-            sequenceFrom: {
-              type: 'number',
-              description: 'Minimum sequence number'
-            },
-            sequenceTo: {
-              type: 'number',
-              description: 'Maximum sequence number'
-            },
-            relatedId: {
-              type: 'string',
-              description: 'Filter by related activity ID'
-            },
-            relatedIds: {
-              type: 'array',
-              items: { type: 'string' },
-              description: 'Filter by any of related activity IDs'
-            }
-          },
-          required: ['logsDir']
-        }
+        description: 'Search and filter activity logs with various criteria including date ranges, text search, and activity relationships',
+        inputSchema: searchLogsInputSchema
       }
     ]
   }
 })
 
-// ツール実行の処理
+// ツール実行の処理 - Type-safe handlers with improved error handling
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
   const { name, arguments: args } = request.params
 
   try {
-    switch (name) {
-      case 'log_activity': {
-        const result = await logActivityTool(args)
-        if (result.type === 'success') {
-          return {
-            content: [
-              {
-                type: 'text',
-                text: JSON.stringify(result.value, null, 2)
-              }
-            ]
-          }
-        } else {
-          throw new Error(result.error.message)
-        }
-      }
-
-      case 'get_log_files': {
-        const result = await getLogFilesTool(args as unknown as GetLogFilesArgs)
-        if (result.type === 'success') {
-          return {
-            content: [
-              {
-                type: 'text',
-                text: JSON.stringify(result.value, null, 2)
-              }
-            ]
-          }
-        } else {
-          throw new Error(result.error.message)
-        }
-      }
-
-      case 'search_logs': {
-        const result = await searchLogsTool(args as unknown as SearchLogsArgs)
-        if (result.type === 'success') {
-          return {
-            content: [
-              {
-                type: 'text',
-                text: JSON.stringify(result.value, null, 2)
-              }
-            ]
-          }
-        } else {
-          throw new Error(result.error.message)
-        }
-      }
-
-      default:
-        throw new Error(`Unknown tool: ${name}`)
-    }
+    // Route to type-safe handler
+    return await TypedMCPHandlers.handleToolRequest(name, args)
   } catch (error) {
+    // Global error handling
+    const message = error instanceof Error ? error.message : 'Unknown error occurred'
     return {
-      content: [
-        {
-          type: 'text',
-          text: `Error: ${error instanceof Error ? error.message : String(error)}`
-        }
-      ],
+      content: [{
+        type: 'text',
+        text: JSON.stringify({ 
+          error: `Tool execution failed: ${message}`,
+          tool: name,
+          timestamp: new Date().toISOString()
+        }, null, 2)
+      }],
       isError: true
     }
   }
 })
 
+// サーバー起動
 async function main() {
   const transport = new StdioServerTransport()
   await server.connect(transport)
+  
+  // Server ready notification
+  console.error('Roo Activity Logger MCP Server is running...')
 }
 
-main().catch((error) => {
-  console.error('Server error:', error)
+// エラーハンドリング
+process.on('SIGINT', async () => {
+  console.error('Server shutdown requested...')
+  process.exit(0)
+})
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason)
+  process.exit(1)
+})
+
+process.on('uncaughtException', (error) => {
+  console.error('Uncaught Exception:', error)
+  process.exit(1)
+})
+
+main().catch(error => {
+  console.error('Failed to start server:', error)
   process.exit(1)
 })
