@@ -25,7 +25,7 @@ export interface ActivityLog {
   readonly summary: string
   readonly intention: string
   readonly context: string
-  readonly details?: any
+  readonly details?: Record<string, unknown>
   readonly parentId?: string
   readonly sequence?: number
   readonly relatedIds?: readonly string[]

@@ -7,6 +7,7 @@ import {
   ListToolsRequestSchema
 } from '@modelcontextprotocol/sdk/types.js'
 import { logActivityTool, getLogFilesTool, searchLogsTool } from './tools/mcp-tools.js'
+import { GetLogFilesArgs, SearchLogsArgs } from './types/search.js'
 
 const server = new Server(
   {
@@ -211,7 +212,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       }
 
       case 'get_log_files': {
-        const result = await getLogFilesTool(args as any)
+        const result = await getLogFilesTool(args as unknown as GetLogFilesArgs)
         if (result.type === 'success') {
           return {
             content: [
@@ -227,7 +228,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       }
 
       case 'search_logs': {
-        const result = await searchLogsTool(args as any)
+        const result = await searchLogsTool(args as unknown as SearchLogsArgs)
         if (result.type === 'success') {
           return {
             content: [

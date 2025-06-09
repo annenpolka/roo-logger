@@ -14,7 +14,7 @@ export class MCPToolError extends Error {
   }
 }
 
-export const logActivityTool = async (input: any): Promise<Result<LogActivityResult, MCPToolError>> => {
+export const logActivityTool = async (input: unknown): Promise<Result<LogActivityResult, MCPToolError>> => {
   try {
     // 入力検証
     const validationResult = validateActivityLogInput(input)

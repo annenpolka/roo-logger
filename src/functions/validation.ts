@@ -40,62 +40,64 @@ export interface ActivityLogInput {
   context: string
   logsDir: string
   level?: LogLevel
-  details?: any
+  details?: Record<string, unknown>
   parentId?: string
   sequence?: number
   relatedIds?: string[]
 }
 
-export const validateActivityLogInput = (input: any): Result<ActivityLogInput, ValidationError> => {
+export const validateActivityLogInput = (input: unknown): Result<ActivityLogInput, ValidationError> => {
   if (!input || typeof input !== 'object') {
     return failure(new ValidationError('入力は有効なオブジェクトである必要があります'))
   }
 
+  const inputRecord = input as Record<string, unknown>
+
   // 必須フィールドの検証
-  const typeResult = validateRequiredString(input.type, 'type')
+  const typeResult = validateRequiredString(inputRecord.type, 'type')
   if (typeResult.type === 'failure') return typeResult
 
-  if (!isValidActivityType(input.type)) {
+  if (!isValidActivityType(inputRecord.type)) {
     return failure(new ValidationError('無効なアクティビティタイプです', 'type'))
   }
 
-  const summaryResult = validateRequiredString(input.summary, 'summary')
+  const summaryResult = validateRequiredString(inputRecord.summary, 'summary')
   if (summaryResult.type === 'failure') return summaryResult
 
-  const intentionResult = validateRequiredString(input.intention, 'intention')
+  const intentionResult = validateRequiredString(inputRecord.intention, 'intention')
   if (intentionResult.type === 'failure') return intentionResult
 
-  const contextResult = validateRequiredString(input.context, 'context')
+  const contextResult = validateRequiredString(inputRecord.context, 'context')
   if (contextResult.type === 'failure') return contextResult
 
-  const logsDirResult = validateAbsolutePath(input.logsDir)
+  const logsDirResult = validateAbsolutePath(inputRecord.logsDir)
   if (logsDirResult.type === 'failure') {
     return failure(new ValidationError(logsDirResult.error.message, 'logsDir'))
   }
 
   // オプションフィールドの検証
-  if (input.level !== undefined && !isValidLogLevel(input.level)) {
+  if (inputRecord.level !== undefined && !isValidLogLevel(inputRecord.level)) {
     return failure(new ValidationError('無効なログレベルです', 'level'))
   }
 
-  if (input.sequence !== undefined && (typeof input.sequence !== 'number' || input.sequence < 0)) {
+  if (inputRecord.sequence !== undefined && (typeof inputRecord.sequence !== 'number' || inputRecord.sequence < 0)) {
     return failure(new ValidationError('sequenceは0以上の数値である必要があります', 'sequence'))
   }
 
-  if (input.relatedIds !== undefined && !Array.isArray(input.relatedIds)) {
+  if (inputRecord.relatedIds !== undefined && !Array.isArray(inputRecord.relatedIds)) {
     return failure(new ValidationError('relatedIdsは文字列の配列である必要があります', 'relatedIds'))
   }
 
   return success({
-    type: input.type,
-    summary: input.summary,
-    intention: input.intention,
-    context: input.context,
-    logsDir: input.logsDir,
-    level: input.level,
-    details: input.details,
-    parentId: input.parentId,
-    sequence: input.sequence,
-    relatedIds: input.relatedIds
+    type: typeResult.value as ActivityType,
+    summary: summaryResult.value,
+    intention: intentionResult.value,
+    context: contextResult.value,
+    logsDir: logsDirResult.value,
+    level: inputRecord.level as LogLevel | undefined,
+    details: inputRecord.details as Record<string, unknown> | undefined,
+    parentId: inputRecord.parentId as string | undefined,
+    sequence: inputRecord.sequence as number | undefined,
+    relatedIds: inputRecord.relatedIds as string[] | undefined
   })
 }
