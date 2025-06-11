@@ -102,6 +102,12 @@ describe('検索関数', () => {
     it('日付が未指定の場合はtrueを返す', () => {
       expect(matchesDateRange(sampleLogs[0], undefined, undefined)).toBe(true)
     })
+
+    it('ISO 8601形式の日付でも正しく比較する', () => {
+      // 問題のケース：ISO 8601形式の日付を検索条件に使った場合
+      expect(matchesDateRange(sampleLogs[0], '2024-01-15T00:00:00.000Z', '2024-01-15T23:59:59.999Z')).toBe(true)
+      expect(matchesDateRange(sampleLogs[0], '2024-01-16T00:00:00.000Z', undefined)).toBe(false)
+    })
   })
 
   describe('matchesSearchText', () => {

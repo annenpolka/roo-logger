@@ -24,10 +24,17 @@ export const matchesLogLevel = (log: ActivityLog, level?: LogLevel): boolean => 
 export const matchesDateRange = (log: ActivityLog, startDate?: string, endDate?: string): boolean => {
   if (!startDate && !endDate) return true
   
-  const logDate = new Date(log.timestamp).toISOString().split('T')[0] // YYYY-MM-DD形式
+  const logTimestamp = new Date(log.timestamp).getTime()
   
-  if (startDate && logDate < startDate) return false
-  if (endDate && logDate > endDate) return false
+  if (startDate) {
+    const startTimestamp = new Date(startDate).getTime()
+    if (logTimestamp < startTimestamp) return false
+  }
+  
+  if (endDate) {
+    const endTimestamp = new Date(endDate).getTime()
+    if (logTimestamp > endTimestamp) return false
+  }
   
   return true
 }
