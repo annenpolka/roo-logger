@@ -91,3 +91,14 @@ npm test:coverage
 - Cline/Roo-Code での利用を想定
 - `npx` による直接実行をサポート
 - 設定可能なログディレクトリ
+
+## 開発ルール
+
+**重要**: すべての操作（ファイル操作、コマンド実行、コード生成、判断、エラー処理など）の後に、必ず `mcp__roo-activity-logger__log_activity` ツールを使用してアクティビティを記録してください。これにより作業履歴が適切にトラッキングされ、後から振り返りが可能になります。
+
+### ログ記録のガイドライン
+- 操作完了後は即座にログを記録する
+- `logsDir` は `/Users/annenpolka/junks/mcp-servers/roo-logger/logs` を使用
+- 適切な `type`、`summary`、`intention`、`context` を記録
+- 関連する操作では `parentId` や `relatedIds` を活用して関係性を維持
+- エラーが発生した場合は `level: "error"` でログを記録
