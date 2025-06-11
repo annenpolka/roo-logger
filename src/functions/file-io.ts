@@ -112,3 +112,16 @@ export const appendToJsonFile = async (filePath: string, log: ActivityLog): Prom
     return failure(new FileIOError(`ファイル書き込みエラー: ${filePath}`, error as Error))
   }
 }
+
+// saveActivityLog function for compatibility
+export const saveActivityLog = async (log: ActivityLog, logsDir: string): Promise<Result<string, FileIOError>> => {
+  const fileName = generateLogFileName()
+  const filePath = path.join(logsDir, fileName)
+  
+  const result = await appendToJsonFile(filePath, log)
+  if (result.type === 'failure') {
+    return failure(result.error)
+  }
+  
+  return success(filePath)
+}

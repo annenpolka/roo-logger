@@ -3,7 +3,7 @@ import { createActivityLog } from '../functions/log-entry.js'
 import { generateLogFileName, appendToJsonFile, readJsonFile, ensureDirectoryExists } from '../functions/file-io.js'
 import { filterLogs, applyPagination, SearchFilters } from '../functions/search.js'
 import { LogActivityResult, GetLogFilesResult, SearchLogsResult, LogFileInfo } from '../types/search.js'
-import { LogActivityArgs, GetLogFilesArgs, SearchLogsArgs } from '../schemas/tool-schemas.js'
+import { LogActivityInput, GetLogFilesInput, SearchLogsInput } from '../schemas/zod-schemas.js'
 import { promises as fs } from 'fs'
 import path from 'path'
 
@@ -14,7 +14,7 @@ export class MCPToolError extends Error {
   }
 }
 
-export const logActivityTool = async (input: LogActivityArgs): Promise<Result<LogActivityResult, MCPToolError>> => {
+export const logActivityTool = async (input: LogActivityInput): Promise<Result<LogActivityResult, MCPToolError>> => {
   try {
     // 入力は既にZodで検証済み
     const validInput = input
@@ -83,7 +83,7 @@ const findLogFiles = async (
   }
 }
 
-export const getLogFilesTool = async (args: GetLogFilesArgs): Promise<Result<GetLogFilesResult, MCPToolError>> => {
+export const getLogFilesTool = async (args: GetLogFilesInput): Promise<Result<GetLogFilesResult, MCPToolError>> => {
   try {
     const {
       logsDir,
@@ -122,7 +122,7 @@ export const getLogFilesTool = async (args: GetLogFilesArgs): Promise<Result<Get
   }
 }
 
-export const searchLogsTool = async (args: SearchLogsArgs): Promise<Result<SearchLogsResult, MCPToolError>> => {
+export const searchLogsTool = async (args: SearchLogsInput): Promise<Result<SearchLogsResult, MCPToolError>> => {
   try {
     const {
       logsDir,
