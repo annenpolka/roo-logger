@@ -5,22 +5,22 @@ import {
   validateActivityLogInput,
   ValidationError
 } from '../../../src/functions/validation'
-import { Result } from '../../../src/types/result'
+import { Result } from 'neverthrow'
 
 describe('バリデーション関数', () => {
   describe('validateAbsolutePath', () => {
     it('有効な絶対パスでSuccessを返す', () => {
       const result = validateAbsolutePath('/absolute/path/to/logs')
-      expect(result.type).toBe('success')
-      if (result.type === 'success') {
+      expect(result.isOk()).toBe(true)
+      if (result.isOk()) {
         expect(result.value).toBe('/absolute/path/to/logs')
       }
     })
 
     it('相対パスでFailureを返す', () => {
       const result = validateAbsolutePath('relative/path')
-      expect(result.type).toBe('failure')
-      if (result.type === 'failure') {
+      expect(result.isErr()).toBe(true)
+      if (result.isErr()) {
         expect(result.error).toBeInstanceOf(ValidationError)
         expect(result.error.message).toContain('絶対パス')
       }
@@ -28,30 +28,30 @@ describe('バリデーション関数', () => {
 
     it('空文字でFailureを返す', () => {
       const result = validateAbsolutePath('')
-      expect(result.type).toBe('failure')
+      expect(result.isErr()).toBe(true)
     })
 
     it('nullやundefinedでFailureを返す', () => {
       const result1 = validateAbsolutePath(null as any)
       const result2 = validateAbsolutePath(undefined as any)
-      expect(result1.type).toBe('failure')
-      expect(result2.type).toBe('failure')
+      expect(result1.isErr()).toBe(true)
+      expect(result2.isErr()).toBe(true)
     })
   })
 
   describe('validateRequiredString', () => {
     it('有効な文字列でSuccessを返す', () => {
       const result = validateRequiredString('test string', 'field')
-      expect(result.type).toBe('success')
-      if (result.type === 'success') {
+      expect(result.isOk()).toBe(true)
+      if (result.isOk()) {
         expect(result.value).toBe('test string')
       }
     })
 
     it('空文字でFailureを返す', () => {
       const result = validateRequiredString('', 'field')
-      expect(result.type).toBe('failure')
-      if (result.type === 'failure') {
+      expect(result.isErr()).toBe(true)
+      if (result.isErr()) {
         expect(result.error).toBeInstanceOf(ValidationError)
         expect(result.error.message).toContain('field')
       }
@@ -59,14 +59,14 @@ describe('バリデーション関数', () => {
 
     it('空白のみの文字列でFailureを返す', () => {
       const result = validateRequiredString('   ', 'field')
-      expect(result.type).toBe('failure')
+      expect(result.isErr()).toBe(true)
     })
 
     it('nullやundefinedでFailureを返す', () => {
       const result1 = validateRequiredString(null as any, 'field')
       const result2 = validateRequiredString(undefined as any, 'field')
-      expect(result1.type).toBe('failure')
-      expect(result2.type).toBe('failure')
+      expect(result1.isErr()).toBe(true)
+      expect(result2.isErr()).toBe(true)
     })
   })
 
@@ -81,7 +81,7 @@ describe('バリデーション関数', () => {
 
     it('有効な入力でSuccessを返す', () => {
       const result = validateActivityLogInput(validInput)
-      expect(result.type).toBe('success')
+      expect(result.isOk()).toBe(true)
     })
 
     it('必須フィールド不足でFailureを返す', () => {
@@ -89,8 +89,8 @@ describe('バリデーション関数', () => {
       delete (invalidInput as any).summary
       
       const result = validateActivityLogInput(invalidInput)
-      expect(result.type).toBe('failure')
-      if (result.type === 'failure') {
+      expect(result.isErr()).toBe(true)
+      if (result.isErr()) {
         expect(result.error).toBeInstanceOf(ValidationError)
         expect(result.error.message).toContain('summary')
       }
@@ -100,14 +100,14 @@ describe('バリデーション関数', () => {
       const invalidInput = { ...validInput, type: 'invalid_type' as any }
       
       const result = validateActivityLogInput(invalidInput)
-      expect(result.type).toBe('failure')
+      expect(result.isErr()).toBe(true)
     })
 
     it('相対パスのlogsDirでFailureを返す', () => {
       const invalidInput = { ...validInput, logsDir: 'relative/path' }
       
       const result = validateActivityLogInput(invalidInput)
-      expect(result.type).toBe('failure')
+      expect(result.isErr()).toBe(true)
     })
 
     it('オプションフィールドを含む有効な入力でSuccessを返す', () => {
@@ -121,7 +121,7 @@ describe('バリデーション関数', () => {
       }
       
       const result = validateActivityLogInput(inputWithOptions)
-      expect(result.type).toBe('success')
+      expect(result.isOk()).toBe(true)
     })
   })
 })

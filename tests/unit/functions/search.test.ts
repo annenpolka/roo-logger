@@ -1,15 +1,17 @@
 import { describe, it, expect } from 'vitest'
 import { 
+  filterLogs,
+  applyPagination
+} from '../../../src/functions/search'
+import {
   matchesActivityType,
   matchesLogLevel,
   matchesDateRange,
   matchesSearchText,
-  matchesParentId,
+  matchesParent as matchesParentId,
   matchesSequenceRange,
-  matchesRelatedIds,
-  filterLogs,
-  applyPagination
-} from '../../../src/functions/search'
+  matchesRelatedIds
+} from '../../../src/functions/search-filters'
 import { ActivityLog } from '../../../src/types/core'
 
 describe('検索関数', () => {

@@ -11,7 +11,7 @@ import {
   type SearchLogsInput
 } from './schemas/zod-schemas.js'
 import { logActivity } from './functions/log-entry.js'
-import { getLogFilesTool, searchLogsTool } from './tools/mcp-tools.js'
+import { logActivityTool, getLogFilesTool, searchLogsTool } from './tools/mcp-tools.js'
 
 // Create an MCP server
 const server = new McpServer({
@@ -25,32 +25,26 @@ server.tool(
   'Record an activity log entry with structured data for tracking development activities, decisions, and context',
   LogActivitySchema.shape,
   async (args: LogActivityInput) => {
-    try {
-      const result = await logActivity(args)
-      return {
+    const result = await logActivityTool(args).match(
+      (success) => ({
         content: [{
           type: 'text' as const,
-          text: JSON.stringify({
-            success: true,
-            logId: result.logId,
-            filePath: result.filePath
-          }, null, 2)
+          text: JSON.stringify(success, null, 2)
         }]
-      }
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error'
-      return {
+      }),
+      (error) => ({
         content: [{
           type: 'text' as const,
           text: JSON.stringify({
             success: false,
-            error: message,
+            error: error.message,
             timestamp: new Date().toISOString()
           }, null, 2)
         }],
         isError: true
-      }
-    }
+      })
+    )
+    return result
   }
 )
 
@@ -60,31 +54,26 @@ server.tool(
   'Get a paginated list of available log files in the specified directory with filtering options',
   GetLogFilesSchema.shape,
   async (args: GetLogFilesInput) => {
-    try {
-      const result = await getLogFilesTool(args)
-      if (result.type === 'failure') {
-        throw new Error(result.error.message)
-      }
-      return {
+    const result = await getLogFilesTool(args).match(
+      (success) => ({
         content: [{
           type: 'text' as const,
-          text: JSON.stringify(result.value, null, 2)
+          text: JSON.stringify(success, null, 2)
         }]
-      }
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error'
-      return {
+      }),
+      (error) => ({
         content: [{
           type: 'text' as const,
           text: JSON.stringify({
             success: false,
-            error: message,
+            error: error.message,
             timestamp: new Date().toISOString()
           }, null, 2)
         }],
         isError: true
-      }
-    }
+      })
+    )
+    return result
   }
 )
 
@@ -94,31 +83,26 @@ server.tool(
   'Search and filter activity logs with various criteria including date ranges, text search, and activity relationships',
   SearchLogsSchema.shape,
   async (args: SearchLogsInput) => {
-    try {
-      const result = await searchLogsTool(args)
-      if (result.type === 'failure') {
-        throw new Error(result.error.message)
-      }
-      return {
+    const result = await searchLogsTool(args).match(
+      (success) => ({
         content: [{
           type: 'text' as const,
-          text: JSON.stringify(result.value, null, 2)
+          text: JSON.stringify(success, null, 2)
         }]
-      }
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error'
-      return {
+      }),
+      (error) => ({
         content: [{
           type: 'text' as const,
           text: JSON.stringify({
             success: false,
-            error: message,
+            error: error.message,
             timestamp: new Date().toISOString()
           }, null, 2)
         }],
         isError: true
-      }
-    }
+      })
+    )
+    return result
   }
 )
 

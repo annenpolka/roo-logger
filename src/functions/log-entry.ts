@@ -3,6 +3,7 @@ import { ActivityLogInput } from './validation.js'
 import { randomUUID } from 'crypto'
 import { saveActivityLog } from './file-io.js'
 import { LogActivityInput } from '../schemas/zod-schemas.js'
+import { ResultAsync } from 'neverthrow'
 
 export const generateId = (): string => {
   return randomUUID()
@@ -35,11 +36,11 @@ export const createActivityLog = (input: ActivityLogInput): ActivityLog => {
 }
 
 // New API compatible logActivity function
-export const logActivity = async (input: LogActivityInput): Promise<{
+export const logActivity = (input: LogActivityInput): ResultAsync<{
   success: boolean
   logId: string
   filePath: string
-}> => {
+}, Error> => {
   // Convert Zod input to ActivityLogInput
   const activityInput: ActivityLogInput = {
     type: input.type,
@@ -55,15 +56,11 @@ export const logActivity = async (input: LogActivityInput): Promise<{
   }
 
   const log = createActivityLog(activityInput)
-  const result = await saveActivityLog(log, input.logsDir)
-  
-  if (result.type === 'failure') {
-    throw new Error(result.error.message)
-  }
-
-  return {
-    success: true,
-    logId: log.id,
-    filePath: result.value
-  }
+  return saveActivityLog(log, input.logsDir)
+    .map((filePath) => ({
+      success: true,
+      logId: log.id,
+      filePath
+    }))
+    .mapErr((error) => new Error(error.message))
 }

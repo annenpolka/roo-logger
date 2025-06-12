@@ -36,8 +36,8 @@ describe('MCPツール', () => {
 
       const result = await logActivityTool(input)
       
-      expect(result.type).toBe('success')
-      if (result.type === 'success') {
+      expect(result.isOk()).toBe(true)
+      if (result.isOk()) {
         expect(result.value).toEqual({
           success: true,
           logId: expect.stringMatching(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i),
@@ -69,13 +69,14 @@ describe('MCPツール', () => {
         summary: 'テスト',
         intention: 'テスト',
         context: 'テスト',
-        logsDir: tempDir
+        logsDir: tempDir,
+        level: 'info' as const
       }
 
       const result = await logActivityTool(validInput)
       
       // 型は満たしているが無効な値の場合は、内部でエラーになる
-      expect(result.type).toBe('success') // 実際は createActivityLog で処理される
+      expect(result.isOk()).toBe(true) // 実際は createActivityLog で処理される
     })
 
     it('既存のファイルに追記する', async () => {
@@ -84,7 +85,8 @@ describe('MCPツール', () => {
         summary: 'ファイル操作',
         intention: 'テスト',
         context: 'テスト',
-        logsDir: tempDir
+        logsDir: tempDir,
+        level: 'info' as const
       }
 
       // 1つ目のログを記録
@@ -119,13 +121,18 @@ describe('MCPツール', () => {
 
     it('ログファイルの一覧を取得する', async () => {
       const input = {
-        logsDir: tempDir
+        logsDir: tempDir,
+        limit: 10,
+        offset: 0,
+        logFilePrefix: 'roo-activity-',
+        logFileExtension: '.json',
+        maxDepth: 3
       }
 
       const result = await getLogFilesTool(input)
       
-      expect(result.type).toBe('success')
-      if (result.type === 'success') {
+      expect(result.isOk()).toBe(true)
+      if (result.isOk()) {
         expect(result.value.files).toHaveLength(3)
         expect(result.value.files.map(f => f.name)).toEqual([
           'roo-activity-2024-01-20.json',
@@ -139,13 +146,16 @@ describe('MCPツール', () => {
       const input = {
         logsDir: tempDir,
         limit: 2,
-        offset: 1
+        offset: 1,
+        logFilePrefix: 'roo-activity-',
+        logFileExtension: '.json',
+        maxDepth: 3
       }
 
       const result = await getLogFilesTool(input)
       
-      expect(result.type).toBe('success')
-      if (result.type === 'success') {
+      expect(result.isOk()).toBe(true)
+      if (result.isOk()) {
         expect(result.value.files).toHaveLength(2)
         expect(result.value.files.map(f => f.name)).toEqual([
           'roo-activity-2024-01-15.json',
@@ -156,12 +166,17 @@ describe('MCPツール', () => {
 
     it('存在しないディレクトリでエラーを返す', async () => {
       const input = {
-        logsDir: '/non/existing/path'
+        logsDir: '/non/existing/path',
+        limit: 10,
+        offset: 0,
+        logFilePrefix: 'roo-activity-',
+        logFileExtension: '.json',
+        maxDepth: 3
       }
 
       const result = await getLogFilesTool(input)
       
-      expect(result.type).toBe('failure')
+      expect(result.isErr()).toBe(true)
     })
   })
 
@@ -206,13 +221,17 @@ describe('MCPツール', () => {
 
     it('すべてのログを検索する', async () => {
       const input = {
-        logsDir: tempDir
+        logsDir: tempDir,
+        limit: 50,
+        offset: 0,
+        logFilePrefix: 'roo-activity-',
+        logFileExtension: '.json'
       }
 
       const result = await searchLogsTool(input)
       
-      expect(result.type).toBe('success')
-      if (result.type === 'success') {
+      expect(result.isOk()).toBe(true)
+      if (result.isOk()) {
         expect(result.value.logs).toHaveLength(2)
         expect(result.value.totalCount).toBe(2)
       }
@@ -221,13 +240,17 @@ describe('MCPツール', () => {
     it('タイプでフィルタリングする', async () => {
       const input = {
         logsDir: tempDir,
-        type: 'command_execution' as const
+        type: 'command_execution' as const,
+        limit: 50,
+        offset: 0,
+        logFilePrefix: 'roo-activity-',
+        logFileExtension: '.json'
       }
 
       const result = await searchLogsTool(input)
       
-      expect(result.type).toBe('success')
-      if (result.type === 'success') {
+      expect(result.isOk()).toBe(true)
+      if (result.isOk()) {
         expect(result.value.logs).toHaveLength(1)
         expect(result.value.logs[0].type).toBe('command_execution')
       }
@@ -237,13 +260,17 @@ describe('MCPツール', () => {
       const input = {
         logsDir: tempDir,
         startDate: '2024-01-12',
-        endDate: '2024-01-20'
+        endDate: '2024-01-20',
+        limit: 50,
+        offset: 0,
+        logFilePrefix: 'roo-activity-',
+        logFileExtension: '.json'
       }
 
       const result = await searchLogsTool(input)
       
-      expect(result.type).toBe('success')
-      if (result.type === 'success') {
+      expect(result.isOk()).toBe(true)
+      if (result.isOk()) {
         expect(result.value.logs).toHaveLength(1)
         expect(result.value.logs[0].id).toBe('log-2')
       }
@@ -252,13 +279,17 @@ describe('MCPツール', () => {
     it('検索テキストでフィルタリングする', async () => {
       const input = {
         logsDir: tempDir,
-        searchText: 'npm'
+        searchText: 'npm',
+        limit: 50,
+        offset: 0,
+        logFilePrefix: 'roo-activity-',
+        logFileExtension: '.json'
       }
 
       const result = await searchLogsTool(input)
       
-      expect(result.type).toBe('success')
-      if (result.type === 'success') {
+      expect(result.isOk()).toBe(true)
+      if (result.isOk()) {
         expect(result.value.logs).toHaveLength(1)
         expect(result.value.logs[0].summary).toContain('npm')
       }
@@ -268,13 +299,15 @@ describe('MCPツール', () => {
       const input = {
         logsDir: tempDir,
         limit: 1,
-        offset: 1
+        offset: 1,
+        logFilePrefix: 'roo-activity-',
+        logFileExtension: '.json'
       }
 
       const result = await searchLogsTool(input)
       
-      expect(result.type).toBe('success')
-      if (result.type === 'success') {
+      expect(result.isOk()).toBe(true)
+      if (result.isOk()) {
         expect(result.value.logs).toHaveLength(1)
         expect(result.value.logs[0].id).toBe('log-1')
         expect(result.value.totalCount).toBe(2)
@@ -284,13 +317,17 @@ describe('MCPツール', () => {
     it('マッチするログがない場合は空配列を返す', async () => {
       const input = {
         logsDir: tempDir,
-        type: 'conversation' as const
+        type: 'conversation' as const,
+        limit: 50,
+        offset: 0,
+        logFilePrefix: 'roo-activity-',
+        logFileExtension: '.json'
       }
 
       const result = await searchLogsTool(input)
       
-      expect(result.type).toBe('success')
-      if (result.type === 'success') {
+      expect(result.isOk()).toBe(true)
+      if (result.isOk()) {
         expect(result.value.logs).toHaveLength(0)
         expect(result.value.totalCount).toBe(0)
       }
@@ -298,12 +335,16 @@ describe('MCPツール', () => {
 
     it('存在しないディレクトリでエラーを返す', async () => {
       const input = {
-        logsDir: '/non/existing/path'
+        logsDir: '/non/existing/path',
+        limit: 50,
+        offset: 0,
+        logFilePrefix: 'roo-activity-',
+        logFileExtension: '.json'
       }
 
       const result = await searchLogsTool(input)
       
-      expect(result.type).toBe('failure')
+      expect(result.isErr()).toBe(true)
     })
   })
 })

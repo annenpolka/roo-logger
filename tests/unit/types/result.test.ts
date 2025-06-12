@@ -1,47 +1,47 @@
 import { describe, it, expect } from 'vitest'
-import { Result, success, failure, isSuccess, isFailure } from '../../../src/types/result'
+import { ok, err } from 'neverthrow'
 
-describe('Result型', () => {
-  describe('success', () => {
+describe('neverthrow Result型', () => {
+  describe('ok', () => {
     it('成功値をラップしたResultを作成する', () => {
-      const result = success('test value')
+      const result = ok('test value')
       
-      expect(result.type).toBe('success')
+      expect(result.isOk()).toBe(true)
       expect(result.value).toBe('test value')
     })
   })
 
-  describe('failure', () => {
+  describe('err', () => {
     it('エラーをラップしたResultを作成する', () => {
       const error = new Error('test error')
-      const result = failure(error)
+      const result = err(error)
       
-      expect(result.type).toBe('failure')
-      expect(result.error).toBe(error)
+      expect(result.isErr()).toBe(true)
+      expect(result._unsafeUnwrapErr()).toBe(error)
     })
   })
 
-  describe('isSuccess', () => {
+  describe('isOk', () => {
     it('成功のResultでtrueを返す', () => {
-      const result = success('test')
-      expect(isSuccess(result)).toBe(true)
+      const result = ok('test')
+      expect(result.isOk()).toBe(true)
     })
 
     it('失敗のResultでfalseを返す', () => {
-      const result = failure(new Error('test'))
-      expect(isSuccess(result)).toBe(false)
+      const result = err(new Error('test'))
+      expect(result.isOk()).toBe(false)
     })
   })
 
-  describe('isFailure', () => {
+  describe('isErr', () => {
     it('失敗のResultでtrueを返す', () => {
-      const result = failure(new Error('test'))
-      expect(isFailure(result)).toBe(true)
+      const result = err(new Error('test'))
+      expect(result.isErr()).toBe(true)
     })
 
     it('成功のResultでfalseを返す', () => {
-      const result = success('test')
-      expect(isFailure(result)).toBe(false)
+      const result = ok('test')
+      expect(result.isErr()).toBe(false)
     })
   })
 })
