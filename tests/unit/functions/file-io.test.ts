@@ -49,8 +49,8 @@ describe('ファイルI/O関数', () => {
       await fs.writeFile(filePath, '{}')
       
       const result = await fileExists(filePath)
-      expect(result.type).toBe('success')
-      if (result.type === 'success') {
+      expect(result.isOk()).toBe(true)
+      if (result.isOk()) {
         expect(result.value).toBe(true)
       }
     })
@@ -59,15 +59,15 @@ describe('ファイルI/O関数', () => {
       const filePath = path.join(tempDir, 'non-existing-file.json')
       
       const result = await fileExists(filePath)
-      expect(result.type).toBe('success')
-      if (result.type === 'success') {
+      expect(result.isOk()).toBe(true)
+      if (result.isOk()) {
         expect(result.value).toBe(false)
       }
     })
 
     it('無効なパスでエラーを返す', async () => {
       const result = await fileExists('')
-      expect(result.type).toBe('failure')
+      expect(result.isErr()).toBe(true)
     })
   })
 
@@ -76,7 +76,7 @@ describe('ファイルI/O関数', () => {
       const dirPath = path.join(tempDir, 'new', 'nested', 'directory')
       
       const result = await ensureDirectoryExists(dirPath)
-      expect(result.type).toBe('success')
+      expect(result.isOk()).toBe(true)
       
       const stat = await fs.stat(dirPath)
       expect(stat.isDirectory()).toBe(true)
@@ -87,12 +87,12 @@ describe('ファイルI/O関数', () => {
       await fs.mkdir(dirPath, { recursive: true })
       
       const result = await ensureDirectoryExists(dirPath)
-      expect(result.type).toBe('success')
+      expect(result.isOk()).toBe(true)
     })
 
     it('無効なパスでエラーを返す', async () => {
       const result = await ensureDirectoryExists('')
-      expect(result.type).toBe('failure')
+      expect(result.isErr()).toBe(true)
     })
   })
 
@@ -106,8 +106,8 @@ describe('ファイルI/O関数', () => {
       await fs.writeFile(filePath, JSON.stringify(testData, null, 2))
       
       const result = await readJsonFile(filePath)
-      expect(result.type).toBe('success')
-      if (result.type === 'success') {
+      expect(result.isOk()).toBe(true)
+      if (result.isOk()) {
         expect(result.value).toEqual(testData)
       }
     })
@@ -116,8 +116,8 @@ describe('ファイルI/O関数', () => {
       const filePath = path.join(tempDir, 'non-existing.json')
       
       const result = await readJsonFile(filePath)
-      expect(result.type).toBe('success')
-      if (result.type === 'success') {
+      expect(result.isOk()).toBe(true)
+      if (result.isOk()) {
         expect(result.value).toEqual([])
       }
     })
@@ -127,7 +127,7 @@ describe('ファイルI/O関数', () => {
       await fs.writeFile(filePath, '{ invalid json }')
       
       const result = await readJsonFile(filePath)
-      expect(result.type).toBe('failure')
+      expect(result.isErr()).toBe(true)
     })
 
     it('空のファイルで空配列を返す', async () => {
@@ -135,8 +135,8 @@ describe('ファイルI/O関数', () => {
       await fs.writeFile(filePath, '')
       
       const result = await readJsonFile(filePath)
-      expect(result.type).toBe('success')
-      if (result.type === 'success') {
+      expect(result.isOk()).toBe(true)
+      if (result.isOk()) {
         expect(result.value).toEqual([])
       }
     })
@@ -157,7 +157,7 @@ describe('ファイルI/O関数', () => {
       const filePath = path.join(tempDir, 'new-log.json')
       
       const result = await appendToJsonFile(filePath, sampleLog)
-      expect(result.type).toBe('success')
+      expect(result.isOk()).toBe(true)
       
       const content = await fs.readFile(filePath, 'utf-8')
       const parsed = JSON.parse(content)
@@ -179,7 +179,7 @@ describe('ファイルI/O関数', () => {
       await fs.writeFile(filePath, JSON.stringify([existingLog], null, 2))
       
       const result = await appendToJsonFile(filePath, sampleLog)
-      expect(result.type).toBe('success')
+      expect(result.isOk()).toBe(true)
       
       const content = await fs.readFile(filePath, 'utf-8')
       const parsed = JSON.parse(content)
@@ -191,7 +191,7 @@ describe('ファイルI/O関数', () => {
       const filePath = path.join(dirPath, 'new-log.json')
       
       const result = await appendToJsonFile(filePath, sampleLog)
-      expect(result.type).toBe('success')
+      expect(result.isOk()).toBe(true)
       
       const content = await fs.readFile(filePath, 'utf-8')
       const parsed = JSON.parse(content)
@@ -200,7 +200,7 @@ describe('ファイルI/O関数', () => {
 
     it('無効なパスでエラーを返す', async () => {
       const result = await appendToJsonFile('', sampleLog)
-      expect(result.type).toBe('failure')
+      expect(result.isErr()).toBe(true)
     })
   })
 })

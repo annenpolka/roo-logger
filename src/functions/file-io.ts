@@ -1,6 +1,6 @@
 import { promises as fs } from 'fs'
 import path from 'path'
-import { Result, success, failure } from '../types/result.js'
+import { Result, ResultAsync, ok, err, errAsync } from 'neverthrow'
 import { ActivityLog } from '../types/core.js'
 
 export class FileIOError extends Error {
@@ -22,93 +22,96 @@ export const generateLogFileName = (
   return `${prefix}${year}-${month}-${day}${extension}`
 }
 
-export const fileExists = async (filePath: string): Promise<Result<boolean, FileIOError>> => {
+export const fileExists = (filePath: string): ResultAsync<boolean, FileIOError> => {
   if (!filePath || filePath.trim() === '') {
-    return failure(new FileIOError('ファイルパスが指定されていません'))
+    return errAsync(new FileIOError('ファイルパスが指定されていません'))
   }
 
-  try {
-    await fs.access(filePath)
-    return success(true)
-  } catch (error) {
-    if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
-      return success(false)
+  return ResultAsync.fromPromise(
+    fs.access(filePath),
+    (error) => {
+      if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+        return new FileIOError('File not found', error as Error)
+      }
+      return new FileIOError(`ファイル存在確認でエラーが発生しました: ${filePath}`, error as Error)
     }
-    return failure(new FileIOError(`ファイル存在確認でエラーが発生しました: ${filePath}`, error as Error))
-  }
+  ).map(() => true)
+    .orElse((error) => {
+      if (error.message === 'File not found') {
+        return ResultAsync.fromSafePromise(Promise.resolve(false))
+      }
+      return errAsync(error)
+    })
 }
 
-export const ensureDirectoryExists = async (dirPath: string): Promise<Result<void, FileIOError>> => {
+export const ensureDirectoryExists = (dirPath: string): ResultAsync<void, FileIOError> => {
   if (!dirPath || dirPath.trim() === '') {
-    return failure(new FileIOError('ディレクトリパスが指定されていません'))
+    return errAsync(new FileIOError('ディレクトリパスが指定されていません'))
   }
 
-  try {
-    await fs.mkdir(dirPath, { recursive: true })
-    return success(undefined)
-  } catch (error) {
-    return failure(new FileIOError(`ディレクトリ作成でエラーが発生しました: ${dirPath}`, error as Error))
-  }
+  return ResultAsync.fromPromise(
+    fs.mkdir(dirPath, { recursive: true }).then(() => undefined),
+    (error) => new FileIOError(`ディレクトリ作成でエラーが発生しました: ${dirPath}`, error as Error)
+  )
 }
 
-export const readJsonFile = async (filePath: string): Promise<Result<ActivityLog[], FileIOError>> => {
+export const readJsonFile = (filePath: string): ResultAsync<ActivityLog[], FileIOError> => {
   if (!filePath || filePath.trim() === '') {
-    return failure(new FileIOError('ファイルパスが指定されていません'))
+    return errAsync(new FileIOError('ファイルパスが指定されていません'))
   }
 
-  try {
-    const existsResult = await fileExists(filePath)
-    if (existsResult.type === 'failure') {
-      return failure(existsResult.error)
-    }
+  return fileExists(filePath)
+    .andThen((exists) => {
+      if (!exists) {
+        return ResultAsync.fromSafePromise(Promise.resolve([]))
+      }
+      
+      return ResultAsync.fromPromise(
+        fs.readFile(filePath, 'utf-8'),
+        (error) => new FileIOError(`ファイル読み込みエラー: ${filePath}`, error as Error)
+      )
+    })
+    .andThen((content) => {
+      // Type guard for content
+      if (Array.isArray(content)) {
+        return ResultAsync.fromSafePromise(Promise.resolve(content))
+      }
+      
+      const textContent = content as string
+      if (textContent.trim() === '') {
+        return ResultAsync.fromSafePromise(Promise.resolve([]))
+      }
 
-    if (!existsResult.value) {
-      return success([])
-    }
-
-    const content = await fs.readFile(filePath, 'utf-8')
-    
-    if (content.trim() === '') {
-      return success([])
-    }
-
-    try {
-      const parsed = JSON.parse(content)
-      return success(Array.isArray(parsed) ? parsed : [])
-    } catch (parseError) {
-      return failure(new FileIOError(`JSONパースエラー: ${filePath}`, parseError as Error))
-    }
-  } catch (error) {
-    return failure(new FileIOError(`ファイル読み込みエラー: ${filePath}`, error as Error))
-  }
+      return ResultAsync.fromPromise(
+        Promise.resolve().then(() => JSON.parse(textContent)),
+        (parseError) => new FileIOError(`JSONパースエラー: ${filePath}`, parseError as Error)
+      ).map((parsed: unknown) => Array.isArray(parsed) ? parsed as ActivityLog[] : [])
+    })
 }
 
-export const appendToJsonFile = async (filePath: string, log: ActivityLog): Promise<Result<void, FileIOError>> => {
+export const appendToJsonFile = (filePath: string, log: ActivityLog): ResultAsync<void, FileIOError> => {
   if (!filePath || filePath.trim() === '') {
-    return failure(new FileIOError('ファイルパスが指定されていません'))
+    return errAsync(new FileIOError('ファイルパスが指定されていません'))
   }
 
-  try {
-    // ディレクトリが存在することを確認
-    const dirPath = path.dirname(filePath)
-    const ensureDirResult = await ensureDirectoryExists(dirPath)
-    if (ensureDirResult.type === 'failure') {
-      return failure(ensureDirResult.error)
-    }
+  const dirPath = path.dirname(filePath)
+  
+  return ensureDirectoryExists(dirPath)
+    .andThen(() => readJsonFile(filePath))
+    .andThen((logs) => {
+      const updatedLogs = [...logs, log]
+      return ResultAsync.fromPromise(
+        fs.writeFile(filePath, JSON.stringify(updatedLogs, null, 2), 'utf-8').then(() => undefined),
+        (error) => new FileIOError(`ファイル書き込みエラー: ${filePath}`, error as Error)
+      )
+    })
+}
 
-    // 既存のデータを読み込み
-    const readResult = await readJsonFile(filePath)
-    if (readResult.type === 'failure') {
-      return failure(readResult.error)
-    }
-
-    // 新しいログを追加
-    const logs = [...readResult.value, log]
-
-    // ファイルに書き込み
-    await fs.writeFile(filePath, JSON.stringify(logs, null, 2), 'utf-8')
-    return success(undefined)
-  } catch (error) {
-    return failure(new FileIOError(`ファイル書き込みエラー: ${filePath}`, error as Error))
-  }
+// saveActivityLog function for compatibility
+export const saveActivityLog = (log: ActivityLog, logsDir: string): ResultAsync<string, FileIOError> => {
+  const fileName = generateLogFileName()
+  const filePath = path.join(logsDir, fileName)
+  
+  return appendToJsonFile(filePath, log)
+    .map(() => filePath)
 }

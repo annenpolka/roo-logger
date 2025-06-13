@@ -1,19 +1,15 @@
-export type Result<T, E = Error> = 
-  | { type: 'success'; value: T }
-  | { type: 'failure'; error: E }
+// Re-export neverthrow types for backward compatibility
+import { Result as NeverthrowResult, ResultAsync as NeverthrowResultAsync, ok as neverthrowOk, err as neverthrowErr } from 'neverthrow'
 
-export const success = <T>(value: T): Result<T> => ({
-  type: 'success',
-  value
-})
+export { NeverthrowResult as Result, NeverthrowResultAsync as ResultAsync, neverthrowOk as ok, neverthrowErr as err }
 
-export const failure = <E = Error>(error: E): Result<never, E> => ({
-  type: 'failure',
-  error
-})
+// For migration compatibility, alias neverthrow's constructors
+export const success = neverthrowOk
+export const failure = neverthrowErr
 
-export const isSuccess = <T, E>(result: Result<T, E>): result is { type: 'success'; value: T } =>
-  result.type === 'success'
+// Type guards using neverthrow's methods
+export const isSuccess = <T, E>(result: NeverthrowResult<T, E>): result is NeverthrowResult<T, E> & { isOk(): true } =>
+  result.isOk()
 
-export const isFailure = <T, E>(result: Result<T, E>): result is { type: 'failure'; error: E } =>
-  result.type === 'failure'
+export const isFailure = <T, E>(result: NeverthrowResult<T, E>): result is NeverthrowResult<T, E> & { isErr(): true } =>
+  result.isErr()

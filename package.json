@@ -1,6 +1,6 @@
 {
   "name": "roo-activity-logger",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Rooの活動を自動的に記録するMCPベースのロギングシステム",
   "main": "dist/index.js",
   "type": "module",
@@ -20,11 +20,13 @@
     "prepare": "npm run build"
   },
   "dependencies": {
-    "winston": "^3.10.0",
     "@modelcontextprotocol/sdk": "^1.6.1",
     "date-fns": "^4.1.0",
     "minimatch": "^10.0.1",
-    "uuid": "^11.1.0"
+    "neverthrow": "^8.2.0",
+    "uuid": "^11.1.0",
+    "winston": "^3.10.0",
+    "zod": "^3.25.56"
   },
   "devDependencies": {
     "@types/jest": "^29.5.4",
