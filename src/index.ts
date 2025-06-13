@@ -10,8 +10,9 @@ import {
   type GetLogFilesInput,
   type SearchLogsInput
 } from './schemas/zod-schemas.js'
-import { logActivity } from './functions/log-entry.js'
 import { logActivityTool, getLogFilesTool, searchLogsTool } from './tools/mcp-tools.js'
+import { LogActivityResult, GetLogFilesResult, SearchLogsResult } from './types/search.js'
+import { MCPToolError } from './tools/mcp-tools.js'
 
 // Create an MCP server
 const server = new McpServer({
@@ -26,13 +27,13 @@ server.tool(
   LogActivitySchema.shape,
   async (args: LogActivityInput) => {
     const result = await logActivityTool(args).match(
-      (success) => ({
+      (success: LogActivityResult) => ({
         content: [{
           type: 'text' as const,
           text: JSON.stringify(success, null, 2)
         }]
       }),
-      (error) => ({
+      (error: MCPToolError) => ({
         content: [{
           type: 'text' as const,
           text: JSON.stringify({
@@ -55,13 +56,13 @@ server.tool(
   GetLogFilesSchema.shape,
   async (args: GetLogFilesInput) => {
     const result = await getLogFilesTool(args).match(
-      (success) => ({
+      (success: GetLogFilesResult) => ({
         content: [{
           type: 'text' as const,
           text: JSON.stringify(success, null, 2)
         }]
       }),
-      (error) => ({
+      (error: MCPToolError) => ({
         content: [{
           type: 'text' as const,
           text: JSON.stringify({
@@ -84,13 +85,13 @@ server.tool(
   SearchLogsSchema.shape,
   async (args: SearchLogsInput) => {
     const result = await searchLogsTool(args).match(
-      (success) => ({
+      (success: SearchLogsResult) => ({
         content: [{
           type: 'text' as const,
           text: JSON.stringify(success, null, 2)
         }]
       }),
-      (error) => ({
+      (error: MCPToolError) => ({
         content: [{
           type: 'text' as const,
           text: JSON.stringify({
