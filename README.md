@@ -4,13 +4,13 @@
 
 ## TL;DR
 
-- **What is it?** — This is an **MCP server** that automatically logs Roo Code(Cline)'s activities, such as command executions and code generation.
+- **What is it?** — This is an **MCP server** that automatically logs AI coding assistant activities such as command executions and code generation (supports Roo Code, Cline, Claude Code, etc.).
 - **What does it do?** — It saves activity history as JSON files, which you can search and analyze later.
-- **How do I use it?** — Add it to your Cline or Roo-Code settings to enable automatic activity logging.
+- **How do I use it?** — Add it to your Claude Code, Cline, or Roo-Code settings to enable automatic activity logging.
 
 ## Overview
 
-Roo Activity Logger is an MCP (Model Context Protocol) server that automatically records Roo's development activities — including command executions, code generation, file operations, and more.
+Roo Activity Logger is an MCP (Model Context Protocol) server that automatically records AI coding assistant development activities — including command executions, code generation, file operations, and more. It supports Claude Code, Cline, Roo-Code, and other MCP-compatible AI assistants.
 All logs are saved in JSON format, making it easy to search, analyze, and restore context at any time.
 
 ### How activity logging works
@@ -94,7 +94,7 @@ Logs are:
 
 You can run Roo Activity Logger directly without cloning the repository by using `npx`.
 
-Add this to your Cline or Roo-Code configuration:
+Add this to your Cline, Roo-Code, or Claude Code configuration:
 
 ```json
 {
@@ -109,7 +109,7 @@ Add this to your Cline or Roo-Code configuration:
 }
 ```
 
-Then, add prompts to your rule files to ensure logging, for example:
+Then, add prompts to your rule files (for Cline/Roo-Code) or CLAUDE.md (for Claude Code) to ensure logging, for example:
 
 ```md
 ## Important
