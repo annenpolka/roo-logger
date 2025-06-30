@@ -138,7 +138,7 @@ AI コーディングアシスタントの MCP 設定に以下を追加します
 ローカルで開発やカスタマイズを行う場合は、リポジトリをクローンしてビルドします:
 
 ```bash
-# リポジトリのクローン (yourusername を実際のユーザー名/組織名に置き換えてください)
+# リポジトリのクローン
 git clone https://github.com/annenpolka/roo-logger.git
 cd roo-logger
 
