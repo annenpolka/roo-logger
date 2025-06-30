@@ -51,7 +51,7 @@ flowchart TD
     "insertedLines": "mermaid 代码块",
     "position": "概述部分之后"
   },
-  "intention": "为了直观地解释保存和检索活动的流程",
+  "intention": "为了直观地解释保存和调用活动的流程",
   "context": "为 Roo Activity Logger 的用户改进文档",
   "parentId": "98280366-1de1-48e0-9914-b3a3409599b4"
 }
