@@ -1,6 +1,6 @@
 # Roo Activity Logger
 
-[日本語版はこちら](./README.ja.md)
+[日本語版はこちら](./README.ja.md) | [中文版](./README.zh.md)
 
 ## TL;DR
 
