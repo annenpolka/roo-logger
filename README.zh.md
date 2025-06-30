@@ -138,7 +138,7 @@ flowchart TD
 如需在本地进行开发或定制，请克隆仓库并进行构建：
 
 ```bash
-# 克隆仓库 (请将 yourusername 替换为您的实际用户名/组织名)
+# 克隆仓库
 git clone https://github.com/annenpolka/roo-logger.git
 cd roo-logger
 
