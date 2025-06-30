@@ -138,7 +138,7 @@ Be sure to perform the logging steps.
 To develop or customize locally, clone the repository and build:
 
 ```bash
-# Clone the repo (replace yourusername with your actual username/org)
+# Clone the repo
 git clone https://github.com/annenpolka/roo-logger.git
 cd roo-logger
 
